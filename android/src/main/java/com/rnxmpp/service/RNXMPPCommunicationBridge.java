@@ -74,6 +74,10 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
             WritableMap rosterProps = Arguments.createMap();
             rosterProps.putString("username", rosterEntry.getUser());
             rosterProps.putString("displayName", rosterEntry.getName());
+
+            Presence availability = roster.getPresence(rosterEntry.getUser());
+            rosterProps.putString("presence",availability.getType().name());
+            
             WritableArray groupArray = Arguments.createArray();
             for (RosterGroup rosterGroup : rosterEntry.getGroups()) {
                 groupArray.pushString(rosterGroup.getName());
@@ -124,6 +128,7 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
         params.putString("password", password);
         sendEvent(reactContext, RNXMPP_LOGIN, params);
     }
+
 
     void sendEvent(ReactContext reactContext, String eventName, @Nullable Object params) {
         reactContext

@@ -220,6 +220,22 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
     }
 
     @Override
+    public void createRoasterEntry(String jabberId, String name) {
+        Roster roster = Roster.getInstanceFor(connection);
+        RosterEntry rosterEntry = roster.getEntry(jabberId);
+        if (rosterEntry == null){
+            try {
+               roster.createEntry(jabberId,name,null);
+            } catch (SmackException.NotLoggedInException | SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
+                logger.log(Level.WARNING, "Could not remove roster entry: ");
+            }
+        }
+    }
+
+
+
+
+    @Override
     public void disconnect() {
         connection.disconnect();
         xmppServiceListener.onDisconnect(null);

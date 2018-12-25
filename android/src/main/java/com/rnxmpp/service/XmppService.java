@@ -43,5 +43,8 @@ public interface XmppService {
     @ReactMethod
     void sendStanza(String stanza);
 
+    @ReactMethod
+    void createRoasterEntry(String jabberId,String name);
+
 
 }

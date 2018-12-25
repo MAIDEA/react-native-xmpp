@@ -95,4 +95,11 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
     public void sendStanza(String stanza) {
         this.xmppService.sendStanza(stanza);
     }
+
+    @Override
+    @ReactMethod
+    public void createRoasterEntry(String jabberId, String name) {
+        this.xmppService.createRoasterEntry(jabberId,name);
+    }
+
 }
