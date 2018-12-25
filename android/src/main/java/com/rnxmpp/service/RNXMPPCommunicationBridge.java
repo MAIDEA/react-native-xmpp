@@ -59,6 +59,7 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     @Override
     public void onMessage(Message message) {
         WritableMap params = Arguments.createMap();
+        params.putString("_id", message.getStanzaId());
         params.putString("thread", message.getThread());
         params.putString("subject", message.getSubject());
         params.putString("body", message.getBody());
@@ -77,7 +78,7 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
 
             Presence availability = roster.getPresence(rosterEntry.getUser());
             rosterProps.putString("presence",availability.getType().name());
-            
+
             WritableArray groupArray = Arguments.createArray();
             for (RosterGroup rosterGroup : rosterEntry.getGroups()) {
                 groupArray.pushString(rosterGroup.getName());
