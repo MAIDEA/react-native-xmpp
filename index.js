@@ -12,7 +12,10 @@ var map = {
     'error': 'RNXMPPError',
     'loginError': 'RNXMPPLoginError',
     'login': 'RNXMPPLogin',
-    'roster': 'RNXMPPRoster'
+    'roster': 'RNXMPPRoster',
+    'messageCreated': 'RNXMPPMessageCreated',
+    'messageDelivered':'RNXMPPMessageDelivered',
+    
 }
 
 const LOG = (message) => {
@@ -25,6 +28,7 @@ class XMPP {
     PLAIN = RNXMPP.PLAIN;
     SCRAM = RNXMPP.SCRAMSHA1;
     MD5 = RNXMPP.DigestMD5;
+    
 
     constructor(){
         this.isConnected = false;
@@ -133,8 +137,14 @@ class XMPP {
         React.NativeModules.RNXMPP.presence(to, type);
     }
 
+    
+
     removeFromRoster(to){
         React.NativeModules.RNXMPP.removeRoster(to);
+    }
+
+    createRosterEntry(to,name){
+        React.NativeModules.RNXMPP.createRoasterEntry(to,name);
     }
 
     disconnect(){

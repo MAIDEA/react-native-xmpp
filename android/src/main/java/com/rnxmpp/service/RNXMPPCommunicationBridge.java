@@ -1,6 +1,7 @@
 package com.rnxmpp.service;
 
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.ReactContext;
@@ -29,12 +30,15 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     public static final String RNXMPP_ERROR =       "RNXMPPError";
     public static final String RNXMPP_LOGIN_ERROR = "RNXMPPLoginError";
     public static final String RNXMPP_MESSAGE =     "RNXMPPMessage";
+    public static final String RNXMPP_MESSAGE_DELIVERED = "RNXMPPMessageDelivered";
     public static final String RNXMPP_ROSTER =      "RNXMPPRoster";
     public static final String RNXMPP_IQ =          "RNXMPPIQ";
     public static final String RNXMPP_PRESENCE =    "RNXMPPPresence";
     public static final String RNXMPP_CONNECT =     "RNXMPPConnect";
     public static final String RNXMPP_DISCONNECT =  "RNXMPPDisconnect";
     public static final String RNXMPP_LOGIN =       "RNXMPPLogin";
+    public static final String RNXMPP_MESSAGE_CREATED =       "RNXMPPMessageCreated";
+
     ReactContext reactContext;
 
     public RNXMPPCommunicationBridge(ReactContext reactContext) {
@@ -66,6 +70,23 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
         params.putString("from", message.getFrom());
         params.putString("src", message.toXML().toString());
         sendEvent(reactContext, RNXMPP_MESSAGE, params);
+    }
+
+    @Override
+    public void onMessageCreated(Message message) {
+        WritableMap params = Arguments.createMap();
+        params.putString("_id", message.getStanzaId());
+        params.putString("thread", message.getThread());
+        params.putString("subject", message.getSubject());
+        params.putString("body", message.getBody());
+        params.putString("from", message.getFrom());
+        params.putString("src", message.toXML().toString());
+        sendEvent(reactContext, RNXMPP_MESSAGE_CREATED, params);
+    }
+
+    @Override
+    public void onMessageDelivered(String messageId) {
+        sendEvent(reactContext, RNXMPP_MESSAGE_DELIVERED, messageId);
     }
 
     @Override

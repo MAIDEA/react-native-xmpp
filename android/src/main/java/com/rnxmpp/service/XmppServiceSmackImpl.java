@@ -30,8 +30,13 @@ import org.jivesoftware.smack.ConnectionConfiguration.SecurityMode;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.muc.DiscussionHistory;
+import org.jivesoftware.smackx.receipts.DeliveryReceipt;
+import org.jivesoftware.smackx.receipts.DeliveryReceiptManager;
+import org.jivesoftware.smackx.receipts.DeliveryReceiptRequest;
+import org.jivesoftware.smackx.receipts.ReceiptReceivedListener;
 
 import android.os.AsyncTask;
+import android.util.Log;
 
 import java.io.IOException;
 import java.security.KeyManagementException;
@@ -49,7 +54,7 @@ import java.util.logging.Logger;
  * Copyright (c) 2016. Teletronics. All rights reserved
  */
 
-public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, StanzaListener, ConnectionListener, ChatMessageListener, RosterLoadedListener {
+public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, StanzaListener, ConnectionListener, ChatMessageListener, RosterLoadedListener,ReceiptReceivedListener {
     XmppServiceListener xmppServiceListener;
     Logger logger = Logger.getLogger(XmppServiceSmackImpl.class.getName());
     XmppGroupMessageListenerImpl groupMessageListner;
@@ -108,6 +113,9 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
 
         connection.addAsyncStanzaListener(this, new OrFilter(new StanzaTypeFilter(IQ.class), new StanzaTypeFilter(Presence.class)));
         connection.addConnectionListener(this);
+
+        DeliveryReceiptManager.getInstanceFor(connection).addReceiptReceivedListener(this);
+        DeliveryReceiptManager.getInstanceFor(connection).autoAddDeliveryReceiptRequests();
 
         ChatManager.getInstanceFor(connection).addChatListener(this);
         roster = Roster.getInstanceFor(connection);
@@ -191,7 +199,15 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
             }
         }
         try {
-            chat.sendMessage(text);
+
+            Message message=new Message();
+            message.setBody(text);
+            message.setFrom(connection.getUser());
+            chat.sendMessage(message);
+
+            //chat.sendMessage(text);
+
+            this.xmppServiceListener.onMessageCreated(message);
         } catch (SmackException e) {
             logger.log(Level.WARNING, "Could not send message", e);
         }
@@ -200,7 +216,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
     @Override
     public void presence(String to, String type) {
         try {
-            connection.sendStanza(new Presence(Presence.Type.fromString(type), type, 1, Presence.Mode.fromString(type)));
+            connection.sendStanza(new Presence(Presence.Type.fromString(type), type, 1, Presence.Mode.available));
         } catch (SmackException.NotConnectedException e) {
             logger.log(Level.WARNING, "Could not send presence", e);
         }
@@ -248,6 +264,12 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         } catch (SmackException.NotLoggedInException | SmackException.NotConnectedException e) {
             logger.log(Level.WARNING, "Could not fetch roster", e);
         }
+    }
+
+    @Override
+    public void onReceiptReceived(String fromJid, String toJid, String receiptId, Stanza receipt) {
+        Log.e("Delivery", "onReceiptReceived: from: " + fromJid + " to: " + toJid + " deliveryReceiptId: " + receiptId + " stanza: " + receipt);
+        this.xmppServiceListener.onMessageDelivered(receiptId);
     }
 
     public class StanzaPacket extends org.jivesoftware.smack.packet.Stanza {
