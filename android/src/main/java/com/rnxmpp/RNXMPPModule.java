@@ -102,4 +102,11 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
         this.xmppService.createRoasterEntry(jabberId,name);
     }
 
+    @Override
+    @ReactMethod
+    public void sendComposingState(String to, String thread,String state) {
+        this.xmppService.sendComposingState(to,thread,state);
+    }
+
+
 }

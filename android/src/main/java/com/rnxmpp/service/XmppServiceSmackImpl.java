@@ -27,6 +27,9 @@ import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
 import org.jivesoftware.smack.util.XmlStringBuilder;
 import org.jivesoftware.smack.util.TLSUtils;
 import org.jivesoftware.smack.ConnectionConfiguration.SecurityMode;
+import org.jivesoftware.smackx.chatstates.ChatState;
+import org.jivesoftware.smackx.chatstates.ChatStateListener;
+import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.muc.DiscussionHistory;
@@ -54,7 +57,7 @@ import java.util.logging.Logger;
  * Copyright (c) 2016. Teletronics. All rights reserved
  */
 
-public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, StanzaListener, ConnectionListener, ChatMessageListener, RosterLoadedListener,ReceiptReceivedListener {
+public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, StanzaListener, ConnectionListener, ChatStateListener, RosterLoadedListener,ReceiptReceivedListener {
     XmppServiceListener xmppServiceListener;
     Logger logger = Logger.getLogger(XmppServiceSmackImpl.class.getName());
     XmppGroupMessageListenerImpl groupMessageListner;
@@ -194,6 +197,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         if (chat == null) {
             if (thread == null){
                 chat = chatManager.createChat(to, this);
+
             }else{
                 chat = chatManager.createChat(to, thread, this);
             }
@@ -203,6 +207,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
             Message message=new Message();
             message.setBody(text);
             message.setFrom(connection.getUser());
+
             chat.sendMessage(message);
 
             //chat.sendMessage(text);
@@ -248,7 +253,40 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         }
     }
 
+    @Override
+    public void sendComposingState(String to, String thread,String state) {
+        String chatIdentifier = (thread == null ? to : thread);
 
+        ChatManager chatManager = ChatManager.getInstanceFor(connection);
+        Chat chat = chatManager.getThreadChat(chatIdentifier);
+        if (chat == null) {
+            if (thread == null){
+                chat = chatManager.createChat(to, this);
+
+            }else{
+                chat = chatManager.createChat(to, thread, this);
+            }
+        }
+        try {
+
+            Message message=new Message();
+            message.setFrom(connection.getUser());
+            if(state.equalsIgnoreCase("composing")){
+                ChatStateExtension extension=new ChatStateExtension(ChatState.composing);
+                message.addExtension(extension);
+            }
+            else {
+                ChatStateExtension extension=new ChatStateExtension(ChatState.paused);
+                message.addExtension(extension);
+            }
+
+            chat.sendMessage(message);
+
+           // this.xmppServiceListener.onMessageCreated(message);
+        } catch (SmackException e) {
+            logger.log(Level.WARNING, "Could not send message", e);
+        }
+    }
 
 
     @Override
@@ -270,6 +308,19 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
     public void onReceiptReceived(String fromJid, String toJid, String receiptId, Stanza receipt) {
         Log.e("Delivery", "onReceiptReceived: from: " + fromJid + " to: " + toJid + " deliveryReceiptId: " + receiptId + " stanza: " + receipt);
         this.xmppServiceListener.onMessageDelivered(receiptId);
+    }
+
+    @Override
+    public void stateChanged(Chat chat, ChatState state) {
+        String name=chat.getParticipant();
+        String stateData="";
+        if(state==ChatState.composing){
+            stateData=name+" is typing";
+        }
+        else {
+            stateData=name+" stopped typing";
+        }
+        Log.e("State",name);
     }
 
     public class StanzaPacket extends org.jivesoftware.smack.packet.Stanza {
@@ -360,5 +411,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         logger.log(Level.WARNING, "Could not reconnect", e);
 
     }
+
+
 
 }

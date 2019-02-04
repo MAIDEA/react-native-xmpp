@@ -9,12 +9,15 @@ import com.facebook.react.bridge.WritableArray;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.modules.core.RCTNativeAppEventEmitter;
 
+import org.jivesoftware.smack.packet.ExtensionElement;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterGroup;
+import org.jivesoftware.smackx.chatstates.ChatState;
+import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
 
 import com.rnxmpp.utils.Parser;
 
@@ -37,6 +40,7 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     public static final String RNXMPP_CONNECT =     "RNXMPPConnect";
     public static final String RNXMPP_DISCONNECT =  "RNXMPPDisconnect";
     public static final String RNXMPP_LOGIN =       "RNXMPPLogin";
+    public static final String RNXMPP_TYPINGSTATUS =       "RNXMPPTypingStatus";
     public static final String RNXMPP_MESSAGE_CREATED =       "RNXMPPMessageCreated";
 
     ReactContext reactContext;
@@ -63,13 +67,28 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     @Override
     public void onMessage(Message message) {
         WritableMap params = Arguments.createMap();
+
         params.putString("_id", message.getStanzaId());
         params.putString("thread", message.getThread());
         params.putString("subject", message.getSubject());
-        params.putString("body", message.getBody());
         params.putString("from", message.getFrom());
         params.putString("src", message.toXML().toString());
-        sendEvent(reactContext, RNXMPP_MESSAGE, params);
+        if(message.getBody()!=null) {
+            params.putString("body", message.getBody());
+            sendEvent(reactContext, RNXMPP_MESSAGE, params);
+        }
+        else {
+            boolean isChatState=message.hasExtension(ChatStateExtension.NAMESPACE);
+            if(isChatState){
+                ChatStateExtension extension= (ChatStateExtension) message.getExtension(ChatStateExtension.NAMESPACE);
+                ChatState state = extension.getChatState();
+                WritableMap paramStatus = Arguments.createMap();
+                paramStatus.putString("from", message.getFrom());
+                paramStatus.putString("status", state.name());
+
+                sendEvent(reactContext, RNXMPP_TYPINGSTATUS, paramStatus);
+            }
+        }
     }
 
     @Override
@@ -150,7 +169,6 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
         params.putString("password", password);
         sendEvent(reactContext, RNXMPP_LOGIN, params);
     }
-
 
     void sendEvent(ReactContext reactContext, String eventName, @Nullable Object params) {
         reactContext

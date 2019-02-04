@@ -15,6 +15,7 @@ var map = {
     'roster': 'RNXMPPRoster',
     'messageCreated': 'RNXMPPMessageCreated',
     'messageDelivered':'RNXMPPMessageDelivered',
+    'typingStatus':'RNXMPPTypingStatus',
     
 }
 
@@ -168,6 +169,10 @@ class XMPP {
 
     leaveRoom(roomJID) {
         React.NativeModules.RNXMPP.leaveRoom(roomJID);
+    }
+
+    sendComposingState(user, thread = null,state){
+        React.NativeModules.RNXMPP.sendComposingState(user,thread,state);
     }
 }
 

@@ -46,5 +46,7 @@ public interface XmppService {
     @ReactMethod
     void createRoasterEntry(String jabberId,String name);
 
+    @ReactMethod
+    void sendComposingState(String to, String thread,String state);
 
 }
