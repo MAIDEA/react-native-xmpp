@@ -27,6 +27,9 @@ RCT_ENUM_CONVERTER(AuthMethod, (@{ PLAIN_AUTH : @(Plain),
     RCTResponseSenderBlock onMessage;
     RCTResponseSenderBlock onIQ;
     RCTResponseSenderBlock onPresence;
+    // Fuad
+    RCTResponseSenderBlock onMessageCreated;
+    RCTResponseSenderBlock onMessageDelivered;
 }
 
 @synthesize bridge = _bridge;
@@ -76,9 +79,22 @@ RCT_EXPORT_MODULE();
 }
 
 -(void)onMessage:(XMPPMessage *)message {
-    NSDictionary *res = [self contentOf:message];
-    [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessage" body:res];
-
+    if ([message isMessageWithBody]) {
+        NSDictionary *res = [self contentOf:message];
+        [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessage" body:res];
+    } else {
+        // Fuad
+        for (NSXMLElement *child in [message children]) {
+            if ([[child namespaceStringValueForPrefix:@""] isEqualToString:@"http://jabber.org/protocol/chatstates"]) {
+                NSMutableDictionary *res = @{
+                                             @"from": [message attributeStringValueForName:@"from"],
+                                             @"status": child.name
+                                             };
+                [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPTypingStatus" body:res];
+                return;
+            }
+        }
+    }
 }
 
 -(void)onRosterReceived:(NSArray *)list {
@@ -91,7 +107,11 @@ RCT_EXPORT_MODULE();
 }
 
 -(void)onPresence:(XMPPPresence *)presence {
-    NSDictionary *res = [self contentOf:presence];
+    NSMutableDictionary *res = [self contentOf:presence];
+    // Fuad
+    if ([res objectForKey:@"type"] == nil) {
+        [res setValue:@"available" forKey:@"type"];
+    }
     [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPPresence" body:res];
 }
 
@@ -187,5 +207,31 @@ RCT_EXPORT_METHOD(sendRoomMessage:(NSString *)roomJID message:(NSString *)messag
     return NO;
 }
 
+
+#pragma mark - Fuad
+
+
+-(void)onMessageCreated:(XMPPMessage *)message {
+    NSDictionary *res = [self contentOf:message];
+    [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageCreated" body:res];
+}
+
+
+-(void)onMessageDelivered:(XMPPMessage *)message {
+    [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageDelivered" body:message.elementID];
+}
+
+RCT_EXPORT_METHOD(createRoasterEntry:(NSString *)to name:(NSString *)name)
+{
+    [RNXMPPService sharedInstance].delegate = self;
+    [[RNXMPPService sharedInstance] createRoasterEntry:to name:name];
+}
+
+RCT_EXPORT_METHOD(sendComposingState:(NSString *)to thread:(NSString *)thread state:(NSString *)state)
+{
+    [RNXMPPService sharedInstance].delegate = self;
+    [[RNXMPPService sharedInstance] sendComposingState:to thread:thread state:state];
+
+}
 
 @end

@@ -19,6 +19,9 @@
 #import "RNXMPPConstants.h"
 #import "XMPPStreamManagement.h"
 #import "XMPPStreamManagementMemoryStorage.h"
+// Fuad
+#import "XMPPAutoPing.h"
+#import "XMPPMessageDeliveryReceipts.h"
 
 @protocol RNXMPPServiceDelegate <NSObject>
 
@@ -31,10 +34,13 @@
 -(void)onConnnect:(NSString *)username password:(NSString *)password;
 -(void)onLogin:(NSString *)username password:(NSString *)password;
 -(void)onLoginError:(NSError *)error;
+// Fuad
+-(void)onMessageCreated:(XMPPMessage *)message;
+-(void)onMessageDelivered:(XMPPMessage *)message;
 
 @end
 
-@interface RNXMPPService : NSObject
+@interface RNXMPPService : NSObject <XMPPStreamDelegate>
 {
     XMPPStream *xmppStream;
     XMPPRoom *xmppRoom;
@@ -50,6 +56,10 @@
     AuthMethod authMethod;
     BOOL customCertEvaluation;
     BOOL isXmppConnected;
+
+    // Fuad
+    XMPPAutoPing *xmppAutoPing;
+    XMPPMessageDeliveryReceipts *deliveryReciepts;
 }
 
 @property (nonatomic, strong, readonly) XMPPStream *xmppStream;
@@ -57,6 +67,9 @@
 @property (nonatomic, weak) id<RNXMPPServiceDelegate> delegate;
 @property (nonatomic) XMPPRoom *xmppRoom;
 @property (nonatomic) NSMutableDictionary *xmppRooms;
+// Fuad
+@property (nonatomic, strong, readonly) XMPPAutoPing *xmppAutoPing;
+@property (nonatomic, strong, readonly) XMPPMessageDeliveryReceipts *deliveryReciepts;
 
 +(RNXMPPService *) sharedInstance;
 - (void)trustHosts:(NSArray *)hosts;
@@ -71,6 +84,9 @@
 - (void)joinRoom:(NSString *)roomJID nickName:(NSString *)nickname;
 - (void)sendRoomMessage:(NSString *)roomJID message:(NSString *)message;
 - (void)leaveRoom:(NSString *)roomJID;
+// Fuad
+- (void)createRoasterEntry:(NSString *)to name:(NSString *)name;
+- (void)sendComposingState:(NSString *)to thread:(NSString *)thread state:(NSString *)state;
 
 @end
 

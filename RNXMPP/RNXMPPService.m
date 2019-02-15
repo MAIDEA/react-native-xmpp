@@ -7,7 +7,7 @@
 #import "XMPPUser.h"
 #import "XMPPRoom.h"
 #import "XMPPRoomMemoryStorage.h"
-#import <CocoaLumberjack/DDLog.h>
+#import "DDLog.h"
 #import "DDTTYLogger.h"
 #import <CFNetwork/CFNetwork.h>
 
@@ -40,6 +40,9 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 @synthesize xmppReconnect;
 @synthesize xmppRoom;
 @synthesize xmppRooms;
+// Fuad
+@synthesize xmppAutoPing;
+@synthesize deliveryReciepts;
 
 +(RNXMPPService *) sharedInstance {
     static RNXMPPService *sharedInstance = nil;
@@ -150,6 +153,17 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 //
 //    xmppCapabilities.autoFetchHashedCapabilities = YES;
 //    xmppCapabilities.autoFetchNonHashedCapabilities = NO;
+
+    // Fuad
+    xmppAutoPing = [[XMPPAutoPing alloc] initWithDispatchQueue:dispatch_get_main_queue()];
+    [xmppAutoPing addDelegate:self delegateQueue:dispatch_get_main_queue()];
+    [xmppAutoPing activate:xmppStream];
+
+    // Fuad
+    deliveryReciepts = [[XMPPMessageDeliveryReceipts alloc] initWithDispatchQueue:dispatch_get_main_queue()];
+    deliveryReciepts.autoSendMessageDeliveryReceipts = YES;
+    deliveryReciepts.autoSendMessageDeliveryRequests = YES;
+    [deliveryReciepts activate:xmppStream];
 
     // Activate xmpp modules
 
@@ -522,6 +536,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 - (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message
 {
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
+    DDLogVerbose(@"MSG RCVD: %@", message);
     if (message.isErrorMessage){
         [self.delegate onError:[message errorMessage]];
     } else {
@@ -566,12 +581,16 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     NSXMLElement *msg = [NSXMLElement elementWithName:@"message"];
     [msg addAttributeWithName:@"type" stringValue:@"chat"];
     [msg addAttributeWithName:@"to" stringValue: to];
+    // Fuad
+    [msg addAttributeWithName:@"id" stringValue:[xmppStream generateUUID]];
     
     if (thread != nil) {
         [msg addChild:[NSXMLElement elementWithName:@"thread" stringValue:thread]];
     }
-    
+
     [msg addChild:body];
+    // Fuad
+    [self.delegate onMessageCreated:[XMPPMessage messageFromElement:msg]];
     [xmppStream sendElement:msg];
 }
 
@@ -625,6 +644,40 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     [[xmppRooms objectForKey:roomJID] deactivate];
     [[xmppRooms objectForKey:roomJID] removeDelegate:self];
     [xmppRooms removeObjectForKey:roomJID];
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#pragma mark Fuad
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+- (void)xmppStream:(XMPPStream *)sender didSendMessage:(XMPPMessage *)message {
+    [self.delegate onMessageDelivered:message];
+}
+
+- (void)createRoasterEntry:(NSString *)to name:(NSString *)name {
+    [xmppRoster addUser:[XMPPJID jidWithString:to] withNickname:name];
+}
+
+- (void)sendComposingState:(NSString *)to thread:(NSString *)thread state:(NSString *)state {
+    if (!isXmppConnected){
+        [self.delegate onError:[NSError errorWithDomain:@"xmpp" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Server is not connected, please reconnect"}]];
+        return;
+    }
+    DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
+    NSXMLElement *chatState = [NSXMLElement elementWithName:state];
+    [chatState addNamespace:[NSXMLElement namespaceWithName:@"" stringValue:@"http://jabber.org/protocol/chatstates"]];
+
+    NSXMLElement *msg = [NSXMLElement elementWithName:@"message"];
+    [msg addAttributeWithName:@"type" stringValue:@"chat"];
+    [msg addAttributeWithName:@"to" stringValue: to];
+
+    if (thread != nil) {
+        [msg addChild:[NSXMLElement elementWithName:@"thread" stringValue:thread]];
+    }
+
+    [msg addChild:chatState];
+    NSLog(@"Sending Composing state: %@", msg);
+    [xmppStream sendElement:msg];
 }
 
 @end
