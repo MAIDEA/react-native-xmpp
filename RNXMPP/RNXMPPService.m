@@ -500,11 +500,14 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     NSArray *users = [sender unsortedUsers];
     NSMutableArray *list = [NSMutableArray array];
     for (XMPPUserMemoryStorageObject *user in users){
+        NSString *presence = [[[user primaryResource] presence] type] != nil ?
+            [[[user primaryResource] presence] type] : @"unavailable";
         [list addObject:@{
                         @"username": [[user jid] user],
                         @"subscription": [user subscription],
                         @"displayName": [user displayName],
                         @"groups": [user groups],
+                        @"presence": presence
                         }];
     }
     [self.delegate onRosterReceived:list];
