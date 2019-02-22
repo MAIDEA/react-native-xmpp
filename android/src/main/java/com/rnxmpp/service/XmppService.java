@@ -17,7 +17,7 @@ public interface XmppService {
     void connect(String jid, String password, String authMethod, String hostname, Integer port);
 
     @ReactMethod
-    void joinRoom(String mucJid, String userNickname);
+    void joinRoom(String mucJid, String userNickname,String lastMessage);
 
     @ReactMethod
     void sendRoomMessage(String roomJid, String text);

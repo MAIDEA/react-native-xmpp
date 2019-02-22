@@ -150,12 +150,19 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
     }
 
 
-    public void joinRoom(String roomJid, String userNickname) {
+    public void joinRoom(String roomJid, String userNickname,String lastMessage) {
         MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
         MultiUserChat muc = manager.getMultiUserChat(roomJid);
         try {
+            Log.e("Date is",lastMessage);
             DiscussionHistory history = new DiscussionHistory();
-            history.setMaxStanzas(0);
+            Calendar c= Calendar.getInstance();
+            long val=Long.parseLong(lastMessage);
+            c.setTimeInMillis(val);
+            history.setSince(c.getTime());
+            Log.e("Date is",""+c.getTime());
+            //history.setMaxStanzas(0);
+
             muc.join(userNickname, "", history, connection.getPacketReplyTimeout());
             groupMessageListner = new XmppGroupMessageListenerImpl(this.xmppServiceListener, logger);
             muc.addMessageListener(groupMessageListner);
