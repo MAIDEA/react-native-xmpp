@@ -634,13 +634,38 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
         [xmppRoom joinRoomUsingNickname:nickname history:history password:nil];
     }
 
+// Fuad
+-(void)joinRoom:(NSString *)roomJID nickName:(NSString *)nickname since:(NSString *)since {
+    XMPPJID *ROOM_JID = [XMPPJID jidWithString:roomJID];
+    XMPPRoomMemoryStorage *roomMemoryStorage = [[XMPPRoomMemoryStorage alloc] init];
+    xmppRoom = [[XMPPRoom alloc] initWithRoomStorage:roomMemoryStorage jid:ROOM_JID dispatchQueue:dispatch_get_main_queue()];
+    [xmppRooms setObject:xmppRoom forKey:roomJID];
+    NSXMLElement *history = [NSXMLElement elementWithName:@"history"];
+    [history addAttributeWithName:@"maxstanzas" stringValue:@"0"];
+    [history addAttributeWithName:@"since" stringValue:since];
+    [xmppRoom activate:xmppStream];
+    [xmppRoom addDelegate:self delegateQueue:dispatch_get_main_queue()];
+    NSLog(@"JOIN Room with %@", history);
+    [xmppRoom joinRoomUsingNickname:nickname history:history password:nil];
+}
+
 - (void)sendRoomMessage:(NSString *)roomJID message:(NSString *)message{
-        if (!isXmppConnected){
-                [self.delegate onError:[NSError errorWithDomain:@"xmpp" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Server is not connected, please reconnect"}]];
-                return;
-            }
-        [[xmppRooms objectForKey:roomJID] sendMessageWithBody:message];
+    if (!isXmppConnected) {
+        [self.delegate onError:[NSError errorWithDomain:@"xmpp" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Server is not connected, please reconnect"}]];
+        return;
     }
+    // Fuad
+    //    [[xmppRooms objectForKey:roomJID] sendMessageWithBody:message];
+    if ([message length] == 0) return;
+
+    NSXMLElement *body = [NSXMLElement elementWithName:@"body" stringValue:message];
+
+    XMPPMessage *msg = [XMPPMessage message];
+    [msg addChild:body];
+    [msg addAttributeWithName:@"id" stringValue:[xmppStream generateUUID]];
+
+    [[xmppRooms objectForKey:roomJID] sendMessage:msg];
+}
 
 -(void)leaveRoom:(NSString *)roomJID{
     [[xmppRooms objectForKey:roomJID] leaveRoom];

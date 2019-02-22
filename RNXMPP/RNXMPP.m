@@ -181,6 +181,20 @@ RCT_EXPORT_METHOD(joinRoom:(NSString *)roomJID nickName:(NSString *)nickname)
     [[RNXMPPService sharedInstance] joinRoom:roomJID nickName:nickname];
 }
 
+// Fuad
+RCT_EXPORT_METHOD(joinRoom:(NSString *)roomJID nickName:(NSString *)nickname since:(NSTimeInterval)since)
+{
+    [RNXMPPService sharedInstance].delegate = self;
+    NSTimeInterval timeInterval = since;
+    NSLog(@"since %f", since);
+    NSDate *date = [NSDate dateWithTimeIntervalSince1970: timeInterval];
+    NSDateFormatter *dateformatter = [[NSDateFormatter alloc] init];
+    [dateformatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZ"];
+    NSString *dateString=[dateformatter stringFromDate:date];
+    NSLog(@"Fetch msgs since: %@", dateString);
+    [[RNXMPPService sharedInstance] joinRoom:roomJID nickName:nickname since:dateString];
+}
+
 RCT_EXPORT_METHOD(leaveRoom:(NSString *)roomJID)
 {
     [RNXMPPService sharedInstance].delegate = self;

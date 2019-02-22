@@ -87,6 +87,7 @@
 // Fuad
 - (void)createRoasterEntry:(NSString *)to name:(NSString *)name;
 - (void)sendComposingState:(NSString *)to thread:(NSString *)thread state:(NSString *)state;
+- (void)joinRoom:(NSString *)roomJID nickName:(NSString *)nickname since:(NSString *)since;
 
 @end
 
