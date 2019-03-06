@@ -182,10 +182,10 @@ RCT_EXPORT_METHOD(joinRoom:(NSString *)roomJID nickName:(NSString *)nickname)
 }
 
 // Fuad
-RCT_EXPORT_METHOD(joinRoom:(NSString *)roomJID nickName:(NSString *)nickname since:(NSTimeInterval)since)
+RCT_EXPORT_METHOD(joinRoom:(NSString *)roomJID nickName:(NSString *)nickname since:(NSString *)since)
 {
     [RNXMPPService sharedInstance].delegate = self;
-    NSTimeInterval timeInterval = since;
+    NSTimeInterval timeInterval =  [since doubleValue];
     NSLog(@"since %f", since);
     NSDate *date = [NSDate dateWithTimeIntervalSince1970: timeInterval];
     NSDateFormatter *dateformatter = [[NSDateFormatter alloc] init];
