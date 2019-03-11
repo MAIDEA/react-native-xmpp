@@ -2,7 +2,6 @@ package com.rnxmpp.service;
 
 import com.facebook.react.bridge.ReadableArray;
 
-import org.jivesoftware.smack.AbstractXMPPConnection;
 import org.jivesoftware.smack.ConnectionConfiguration;
 import org.jivesoftware.smack.ConnectionListener;
 import org.jivesoftware.smack.ReconnectionManager;
@@ -14,28 +13,18 @@ import org.jivesoftware.smack.chat.Chat;
 import org.jivesoftware.smack.chat.ChatManager;
 import org.jivesoftware.smack.chat.ChatManagerListener;
 import org.jivesoftware.smack.chat.ChatMessageListener;
-import org.jivesoftware.smack.filter.AndFilter;
-import org.jivesoftware.smack.filter.FromMatchesFilter;
-import org.jivesoftware.smack.filter.MessageTypeFilter;
-import org.jivesoftware.smack.filter.MessageWithSubjectFilter;
-import org.jivesoftware.smack.filter.NotFilter;
 import org.jivesoftware.smack.filter.OrFilter;
-import org.jivesoftware.smack.filter.StanzaExtensionFilter;
-import org.jivesoftware.smack.filter.StanzaFilter;
 import org.jivesoftware.smack.filter.StanzaTypeFilter;
-import org.jivesoftware.smack.filter.ToFilter;
 import org.jivesoftware.smack.packet.IQ;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Presence;
 import org.jivesoftware.smack.packet.Stanza;
 import org.jivesoftware.smack.roster.Roster;
 import org.jivesoftware.smack.roster.RosterEntry;
-import org.jivesoftware.smack.roster.RosterGroup;
 import org.jivesoftware.smack.roster.RosterLoadedListener;
 import org.jivesoftware.smack.sasl.SASLErrorException;
 import org.jivesoftware.smack.tcp.XMPPTCPConnection;
 import org.jivesoftware.smack.tcp.XMPPTCPConnectionConfiguration;
-import org.jivesoftware.smack.util.StringUtils;
 import org.jivesoftware.smack.util.XmlStringBuilder;
 import org.jivesoftware.smack.util.TLSUtils;
 import org.jivesoftware.smack.ConnectionConfiguration.SecurityMode;
@@ -46,7 +35,7 @@ import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
 import org.jivesoftware.smackx.muc.DiscussionHistory;
 import org.jivesoftware.smackx.muc.packet.MUCInitialPresence;
-import org.jivesoftware.smackx.muc.packet.MUCUser;
+import org.jivesoftware.smackx.ping.PingFailedListener;
 import org.jivesoftware.smackx.ping.PingManager;
 import org.jivesoftware.smackx.receipts.DeliveryReceipt;
 import org.jivesoftware.smackx.receipts.DeliveryReceiptManager;
@@ -63,6 +52,7 @@ import java.security.NoSuchAlgorithmException;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -79,7 +69,6 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
     XmppGroupMessageListenerImpl groupMessageListner;
 
     XMPPTCPConnection connection;
-   // AbstractXMPPConnection connection;
     Roster roster;
     List<String> trustedHosts = new ArrayList<>();
     String password;
@@ -138,10 +127,9 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         DeliveryReceiptManager.getInstanceFor(connection).autoAddDeliveryReceiptRequests();
 
         ReconnectionManager manager = ReconnectionManager.getInstanceFor(this.connection);
-        ReconnectionManager.setEnabledPerDefault(true);
         manager.enableAutomaticReconnection();
-
-
+        manager.setFixedDelay(5);
+        ReconnectionManager.setEnabledPerDefault(true);
 
         ChatManager.getInstanceFor(connection).addChatListener(this);
         roster = Roster.getInstanceFor(connection);
@@ -179,29 +167,22 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         try {
             Log.e("Date is",lastMessage);
             DiscussionHistory history = new DiscussionHistory();
-            MUCInitialPresence.History history1 = new MUCInitialPresence.History();
-
             Calendar c= Calendar.getInstance();
             long val=Long.parseLong(lastMessage);
             c.setTimeInMillis(val);
             c.add(Calendar.SECOND,1);
             history.setSince(c.getTime());
-            history1.setSince(c.getTime());
             Log.e("Date is",""+c.getTime());
             //history.setMaxStanzas(0);
 
-            if(!muc.isJoined()) {
-                Log.e("Not Joined", "User has not joined the room");
-
+            if(muc.isJoined()){
+                sendOnlinePresence(muc,roomJid,userNickname,c.getTime());
+            }
+            else {
                 muc.join(userNickname, "", history, connection.getPacketReplyTimeout());
                 groupMessageListner = new XmppGroupMessageListenerImpl(this.xmppServiceListener, logger);
                 muc.addMessageListener(groupMessageListner);
             }
-
-            else {
-                sendPresence(roomJid,userNickname,history1);
-            }
-
         } catch (SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
             logger.log(Level.WARNING, "Could not join chat room", e);
         }
@@ -209,20 +190,21 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
 
 
 
-    private void sendPresence (String room, String nickName,MUCInitialPresence.History history){
+    private void sendOnlinePresence(MultiUserChat muc,String room,String nickname,Date date ){
         Presence joinPresence = new Presence(Presence.Type.available);
-        joinPresence.setTo(room + "/" + nickName);
+        joinPresence.setTo(room + "/" + nickname);
         MUCInitialPresence mucInitialPresence = new MUCInitialPresence();
-        if (history != null) {
-            mucInitialPresence.setHistory(history);
-        }
+        MUCInitialPresence.History history = new MUCInitialPresence.History();
+        history.setSince(date);
+        mucInitialPresence.setHistory(history);
         joinPresence.addExtension(mucInitialPresence);
         try {
             connection.sendStanza(joinPresence);
-        } catch (SmackException.NotConnectedException e) {
-            e.printStackTrace();
         }
+        catch (Exception e){}
     }
+
+
     public void sendRoomMessage(String roomJid, String text) {
 
         MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
@@ -303,7 +285,6 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
     public void createRoasterEntry(String jabberId, String name) {
         Roster roster = Roster.getInstanceFor(connection);
         RosterEntry rosterEntry = roster.getEntry(jabberId);
-
         if (rosterEntry == null){
             try {
                roster.createEntry(jabberId,name,null);
@@ -471,5 +452,9 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
     @Override
     public void reconnectionFailed(Exception e) {
         logger.log(Level.WARNING, "Could not reconnect", e);
+
     }
+
+
+
 }
