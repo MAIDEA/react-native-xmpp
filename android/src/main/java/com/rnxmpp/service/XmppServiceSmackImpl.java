@@ -126,10 +126,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         DeliveryReceiptManager.getInstanceFor(connection).addReceiptReceivedListener(this);
         DeliveryReceiptManager.getInstanceFor(connection).autoAddDeliveryReceiptRequests();
 
-        ReconnectionManager manager = ReconnectionManager.getInstanceFor(this.connection);
-        manager.enableAutomaticReconnection();
-        manager.setFixedDelay(5);
-        ReconnectionManager.setEnabledPerDefault(true);
+
 
         ChatManager.getInstanceFor(connection).addChatListener(this);
         roster = Roster.getInstanceFor(connection);
@@ -415,7 +412,10 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
     public void authenticated(XMPPConnection connection, boolean resumed) {
         this.xmppServiceListener.onLogin(connection.getUser(), password);
 
-
+        ReconnectionManager manager = ReconnectionManager.getInstanceFor(this.connection);
+        manager.enableAutomaticReconnection();
+        manager.setFixedDelay(2);
+        ReconnectionManager.setEnabledPerDefault(true);
     }
 
     @Override
