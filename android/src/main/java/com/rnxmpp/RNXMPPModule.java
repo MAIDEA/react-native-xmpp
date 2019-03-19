@@ -1,5 +1,7 @@
 package com.rnxmpp;
 
+import android.text.TextUtils;
+
 import com.facebook.react.bridge.ReactApplicationContext;
 import com.facebook.react.bridge.ReactContextBaseJavaModule;
 import com.facebook.react.bridge.ReactMethod;
@@ -47,6 +49,7 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
 
     @ReactMethod
     public void joinRoom(String mucJid, String userNickname,String timestamp) {
+        if(!TextUtils.isEmpty(userNickname))
         this.xmppService.joinRoom(mucJid, userNickname,timestamp);
     }
 

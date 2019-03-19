@@ -155,6 +155,8 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
 
     @Override
     public void onDisconnect(Exception e) {
+
+         Log.e("Connection", "Disconnect called from here");
         if (e != null) {
             sendEvent(reactContext, RNXMPP_DISCONNECT, e.getLocalizedMessage());
         } else {

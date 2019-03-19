@@ -54,6 +54,9 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -93,7 +96,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         XMPPTCPConnectionConfiguration.Builder confBuilder = XMPPTCPConnectionConfiguration.builder()
                 .setServiceName(serviceName)
                 .setUsernameAndPassword(jidParts[0], password)
-                .setConnectTimeout(3000)
+                .setConnectTimeout(10000)
                 // .setDebuggerEnabled(true)
                 .setSecurityMode(ConnectionConfiguration.SecurityMode.required);
 
@@ -119,6 +122,7 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         }
         XMPPTCPConnectionConfiguration connectionConfiguration = confBuilder.build();
         connection = new XMPPTCPConnection(connectionConfiguration);
+        connection.setPacketReplyTimeout(10000);
 
         connection.addAsyncStanzaListener(this, new OrFilter(new StanzaTypeFilter(IQ.class), new StanzaTypeFilter(Presence.class)));
         connection.addConnectionListener(this);
@@ -126,36 +130,14 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
         DeliveryReceiptManager.getInstanceFor(connection).addReceiptReceivedListener(this);
         DeliveryReceiptManager.getInstanceFor(connection).autoAddDeliveryReceiptRequests();
 
-
-
         ChatManager.getInstanceFor(connection).addChatListener(this);
         roster = Roster.getInstanceFor(connection);
         roster.addRosterLoadedListener(this);
 
-        new AsyncTask<Void, Void, Void>() {
-
-            @Override
-            protected Void doInBackground(Void... params) {
-                try {
-                    connection.connect().login();
-                } catch (XMPPException | SmackException | IOException e) {
-                    logger.log(Level.SEVERE, "Could not login for user " + jidParts[0], e);
-                    if (e instanceof SASLErrorException){
-                        XmppServiceSmackImpl.this.xmppServiceListener.onLoginError(((SASLErrorException) e).getSASLFailure().toString());
-                    }else{
-                        XmppServiceSmackImpl.this.xmppServiceListener.onError(e);
-                    }
-
-                }
-                return null;
-            }
-
-            @Override
-            protected void onPostExecute(Void dummy) {
-
-            }
-        }.execute();
+       new ReconnectionTask().execute();
     }
+
+
 
 
     public void joinRoom(String roomJid, String userNickname,String lastMessage) {
@@ -412,10 +394,6 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
     public void authenticated(XMPPConnection connection, boolean resumed) {
         this.xmppServiceListener.onLogin(connection.getUser(), password);
 
-        ReconnectionManager manager = ReconnectionManager.getInstanceFor(this.connection);
-        manager.enableAutomaticReconnection();
-        manager.setFixedDelay(2);
-        ReconnectionManager.setEnabledPerDefault(true);
     }
 
     @Override
@@ -437,6 +415,47 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
     @Override
     public void connectionClosed() {
         logger.log(Level.INFO, "Connection was closed.");
+        if(connection!=null){
+            Log.e("Connection", "Connection is not null");
+
+            final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+            executor.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+
+                        ReconnectionManager manager = ReconnectionManager.getInstanceFor(connection);
+                        manager.setFixedDelay(5);
+                        manager.enableAutomaticReconnection();
+                        ReconnectionManager.setEnabledPerDefault(true);
+
+                        connection.connect().login();
+
+                    } catch (XMPPException | SmackException | IOException e) {
+                        // logger.log(Level.SEVERE, "Could not login for user " + jidParts[0], e);
+                        if (e instanceof SASLErrorException){
+                            XmppServiceSmackImpl.this.xmppServiceListener.onLoginError(((SASLErrorException) e).getSASLFailure().toString());
+                        }else{
+                            XmppServiceSmackImpl.this.xmppServiceListener.onError(e);
+                        }
+
+                    }
+                }
+            }, 3, TimeUnit.SECONDS);
+
+//            try {
+//                Log.e("Connection", "Reconnection code called");
+//                new ReconnectionTask().execute();
+//            }
+//            catch (Exception e){
+//                Log.e("Connection", e.getLocalizedMessage());
+//            }
+        }
+        else {
+            Log.e("Connection", "Connection is null");
+        }
+
+        xmppServiceListener.onDisconnect( new SmackException.NotConnectedException());
     }
 
     @Override
@@ -452,9 +471,33 @@ public class XmppServiceSmackImpl implements XmppService, ChatManagerListener, S
     @Override
     public void reconnectionFailed(Exception e) {
         logger.log(Level.WARNING, "Could not reconnect", e);
-
+        this.xmppServiceListener.onDisconnect( new SmackException.NotConnectedException());
     }
 
 
+    class ReconnectionTask extends AsyncTask<Void,Void,Void>{
 
+        @Override
+        protected Void doInBackground(Void... voids) {
+            try {
+
+                ReconnectionManager manager = ReconnectionManager.getInstanceFor(connection);
+                manager.setFixedDelay(5);
+                manager.enableAutomaticReconnection();
+                ReconnectionManager.setEnabledPerDefault(true);
+
+                connection.connect().login();
+
+            } catch (XMPPException | SmackException | IOException e) {
+                // logger.log(Level.SEVERE, "Could not login for user " + jidParts[0], e);
+                if (e instanceof SASLErrorException){
+                    XmppServiceSmackImpl.this.xmppServiceListener.onLoginError(((SASLErrorException) e).getSASLFailure().toString());
+                }else{
+                    XmppServiceSmackImpl.this.xmppServiceListener.onError(e);
+                }
+
+            }
+            return null;
+        }
+    }
 }
