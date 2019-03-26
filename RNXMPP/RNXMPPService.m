@@ -157,6 +157,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     // Fuad
     xmppAutoPing = [[XMPPAutoPing alloc] initWithDispatchQueue:dispatch_get_main_queue()];
     [xmppAutoPing addDelegate:self delegateQueue:dispatch_get_main_queue()];
+    [xmppAutoPing setPingInterval:490];
     [xmppAutoPing activate:xmppStream];
 
     // Fuad
