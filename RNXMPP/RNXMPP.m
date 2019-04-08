@@ -185,11 +185,11 @@ RCT_EXPORT_METHOD(joinRoom:(NSString *)roomJID nickName:(NSString *)nickname)
 RCT_EXPORT_METHOD(joinRoom:(NSString *)roomJID nickName:(NSString *)nickname since:(NSString *)since)
 {
     [RNXMPPService sharedInstance].delegate = self;
-    NSTimeInterval timeInterval =  [since doubleValue];
-    NSLog(@"since %f", since);
+    NSTimeInterval timeInterval =  ([since doubleValue] / 1000);
+    NSLog(@"since %d", since);
     NSDate *date = [NSDate dateWithTimeIntervalSince1970: timeInterval];
     NSDateFormatter *dateformatter = [[NSDateFormatter alloc] init];
-    [dateformatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ssZ"];
+    [dateformatter setDateFormat:@"yyyy-MM-dd'T'HH:mm:ss.SSSZZZZZ"];
     NSString *dateString=[dateformatter stringFromDate:date];
     NSLog(@"Fetch msgs since: %@", dateString);
     [[RNXMPPService sharedInstance] joinRoom:roomJID nickName:nickname since:dateString];

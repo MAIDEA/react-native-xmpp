@@ -174,7 +174,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     
     xmppStreamManagentStorage = [[XMPPStreamManagementMemoryStorage alloc] init];
     xmppStreamManagement = [[XMPPStreamManagement alloc] initWithStorage:xmppStreamManagentStorage];
-    [xmppStreamManagement activate:xmppStream];
+//    [xmppStreamManagement activate:xmppStream];
     xmppStreamManagement.autoResume = YES;
     [xmppStreamManagement addDelegate:self  delegateQueue:dispatch_get_main_queue()];
     
@@ -642,7 +642,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     xmppRoom = [[XMPPRoom alloc] initWithRoomStorage:roomMemoryStorage jid:ROOM_JID dispatchQueue:dispatch_get_main_queue()];
     [xmppRooms setObject:xmppRoom forKey:roomJID];
     NSXMLElement *history = [NSXMLElement elementWithName:@"history"];
-    [history addAttributeWithName:@"maxstanzas" stringValue:@"0"];
+//    [history addAttributeWithName:@"maxstanzas" stringValue:@"0"];
     [history addAttributeWithName:@"since" stringValue:since];
     [xmppRoom activate:xmppStream];
     [xmppRoom addDelegate:self delegateQueue:dispatch_get_main_queue()];
