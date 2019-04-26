@@ -23,10 +23,17 @@ public interface XmppService {
     void sendRoomMessage(String roomJid, String text);
 
     @ReactMethod
+    void sendRoomMessageUpdated(String roomJid, String text,String messageId);
+
+    @ReactMethod
     void leaveRoom(String mucJid);
 
     @ReactMethod
     void message(String text, String to, String thread);
+
+    @ReactMethod
+    void messageUpdated(String text, String to, String thread,String messageId);
+
 
     @ReactMethod
     void presence(String to, String type);
@@ -48,5 +55,8 @@ public interface XmppService {
 
     @ReactMethod
     void sendComposingState(String to, String thread,String state);
+
+    @ReactMethod
+    void requestMessageId();
 
 }

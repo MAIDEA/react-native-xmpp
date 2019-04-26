@@ -59,6 +59,11 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
     }
 
     @ReactMethod
+    public void sendRoomMessageUpdated(String mucJid, String text,String messageId) {
+        this.xmppService.sendRoomMessageUpdated(mucJid, text,messageId);
+    }
+
+    @ReactMethod
     public void leaveRoom(String mucJid) {
         this.xmppService.leaveRoom(mucJid);
     }
@@ -68,6 +73,14 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
     public void message(String text, String to, String thread){
         this.xmppService.message(text, to, thread);
     }
+
+    @Override
+    @ReactMethod
+    public void messageUpdated(String text, String to, String thread, String messageId) {
+        this.xmppService.messageUpdated(text, to, thread,messageId);
+    }
+
+
 
     @Override
     @ReactMethod
@@ -109,6 +122,12 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
     @ReactMethod
     public void sendComposingState(String to, String thread,String state) {
         this.xmppService.sendComposingState(to,thread,state);
+    }
+
+    @Override
+    @ReactMethod
+    public void requestMessageId() {
+      this.xmppService.requestMessageId();
     }
 
 

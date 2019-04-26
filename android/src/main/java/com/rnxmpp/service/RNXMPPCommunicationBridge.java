@@ -42,6 +42,8 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     public static final String RNXMPP_LOGIN =       "RNXMPPLogin";
     public static final String RNXMPP_TYPINGSTATUS =       "RNXMPPTypingStatus";
     public static final String RNXMPP_MESSAGE_CREATED =       "RNXMPPMessageCreated";
+    public static final String RNXMPP_MESSAGE_ID_CREATED =       "RNXMPPMessageIdCreated";
+    public static final String RNXMPP_MESSAGE_SENT =       "RNXMPPMessageSent";
 
     ReactContext reactContext;
 
@@ -89,6 +91,17 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
                 sendEvent(reactContext, RNXMPP_TYPINGSTATUS, paramStatus);
             }
         }
+    }
+
+    @Override
+    public void onMessageIdGenerated(String messageId) {
+        Log.e("Message id is",messageId);
+        sendEvent(reactContext, RNXMPP_MESSAGE_ID_CREATED, messageId);
+    }
+
+    @Override
+    public void onMessageSent(String messageId) {
+        sendEvent(reactContext, RNXMPP_MESSAGE_SENT, messageId);
     }
 
     @Override
@@ -160,7 +173,7 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
         if (e != null) {
             sendEvent(reactContext, RNXMPP_DISCONNECT, e.getLocalizedMessage());
         } else {
-            sendEvent(reactContext, RNXMPP_DISCONNECT, null);
+            sendEvent(reactContext, RNXMPP_DISCONNECT, "random");
         }
     }
 
