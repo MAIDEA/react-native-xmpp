@@ -38,6 +38,9 @@
 -(void)onMessageCreated:(XMPPMessage *)message;
 -(void)onMessageDelivered:(XMPPMessage *)message;
 
+-(void)onMessageSent:(XMPPMessage *)message;
+-(void)onMessageIdGenerated:(NSString *)messageId;
+
 @end
 
 @interface RNXMPPService : NSObject <XMPPStreamDelegate>
@@ -76,8 +79,11 @@
 - (BOOL)connect:(NSString *)myJID withPassword:(NSString *)myPassword auth:(AuthMethod)auth hostname:(NSString *)hostname port:(int)port;
 - (void)disconnect;
 - (void)disconnectAfterSending;
+
+
 - (void)sendMessage:(NSString *)text to:(NSString *)username thread:(NSString *)thread;
 - (void)sendPresence:(NSString *)to type:(NSString *)type;
+
 - (void)removeRoster:(NSString *)to;
 - (void)fetchRoster;
 - (void)sendStanza:(NSString *)stanza;
@@ -88,6 +94,10 @@
 - (void)createRoasterEntry:(NSString *)to name:(NSString *)name;
 - (void)sendComposingState:(NSString *)to thread:(NSString *)thread state:(NSString *)state;
 - (void)joinRoom:(NSString *)roomJID nickName:(NSString *)nickname since:(NSString *)since;
+
+//Surendra
+-(void)sendMessageUpdated:(NSString *)text to:(NSString *)to thread:(NSString *)thread messageId:(NSString*)messageId;
+- (void)sendRoomMessageUpdated:(NSString *)roomJID message:(NSString *)message messageId:(NSString*)messageId;
 
 @end
 

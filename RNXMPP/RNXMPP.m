@@ -20,7 +20,6 @@ RCT_ENUM_CONVERTER(AuthMethod, (@{ PLAIN_AUTH : @(Plain),
                                           SCRAM, integerValue)
 @end
 
-
 @implementation RNXMPP {
     RCTResponseSenderBlock onError;
     RCTResponseSenderBlock onConnect;
@@ -30,6 +29,10 @@ RCT_ENUM_CONVERTER(AuthMethod, (@{ PLAIN_AUTH : @(Plain),
     // Fuad
     RCTResponseSenderBlock onMessageCreated;
     RCTResponseSenderBlock onMessageDelivered;
+    
+    //Surendra
+    RCTResponseSenderBlock onMessageSent;
+    RCTResponseSenderBlock onMessageIdGenerated;
 }
 
 @synthesize bridge = _bridge;
@@ -208,6 +211,30 @@ RCT_EXPORT_METHOD(sendRoomMessage:(NSString *)roomJID message:(NSString *)messag
 }
 
 
+
+// Surendra - Start
+RCT_EXPORT_METHOD(requestMessageId)
+{
+    DDLogVerbose(@"Surnedra.. : calling from RCT requestMessageId");
+    [RNXMPPService sharedInstance].delegate = self;
+    [[RNXMPPService sharedInstance] requestMessageId];
+}
+
+RCT_EXPORT_METHOD(messageUpdated:(NSString *)text to:(NSString *)to thread:(NSString *)threadId messageId:(NSString*)messageId){
+    DDLogVerbose(@"Surnedra.. : calling from RCT sendMessageUpdated");
+    [RNXMPPService sharedInstance].delegate = self;
+    [[RNXMPPService sharedInstance] sendMessageUpdated:text to:to thread:threadId messageId:messageId];
+}
+
+RCT_EXPORT_METHOD(sendRoomMessageUpdated:(NSString *)roomJID message:(NSString *)message messageId:(NSString*)messageId)
+{
+    DDLogVerbose(@"Surnedra.. : calling from RCT sendRoomMessageUpdated");
+    [RNXMPPService sharedInstance].delegate = self;
+    [[RNXMPPService sharedInstance] sendRoomMessageUpdated:roomJID message:message messageId:messageId];
+}
+
+// Surendra - End
+
 - (NSDictionary *)constantsToExport
 {
     return @{ PLAIN_AUTH : @(Plain),
@@ -224,12 +251,22 @@ RCT_EXPORT_METHOD(sendRoomMessage:(NSString *)roomJID message:(NSString *)messag
 
 #pragma mark - Fuad
 
+-(void)onMessageSent:(NSString *)message {
+    [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageDelivered" body:message];
+    DDLogVerbose(@"Surnedra.. : called RNXMPPMessageDelivered");
+}
+
+-(void)onMessageIdGenerated:(NSString *)messageId {
+    [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageIdCreated" body:messageId];
+    DDLogVerbose(@"Surnedra.. : called RNXMPPMessageIdCreated");
+}
+
+
 
 -(void)onMessageCreated:(XMPPMessage *)message {
     NSDictionary *res = [self contentOf:message];
     [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageCreated" body:res];
 }
-
 
 -(void)onMessageDelivered:(XMPPMessage *)message {
     [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageDelivered" body:message.elementID];

@@ -34,7 +34,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 #pragma mark -
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-@implementation RNXMPPService
+ @implementation RNXMPPService
 
 @synthesize xmppStream;
 @synthesize xmppReconnect;
@@ -477,7 +477,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
         [xmppStreamManagement enableStreamManagementWithResumption:YES maxTimeout:600];
         [xmppStreamManagement automaticallyRequestAcksAfterStanzaCount:1 orTimeout:0];
     }
-
+    
     [self goOnline];
     [self.delegate onLogin:username password:password];
 }
@@ -535,6 +535,15 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 }
 
 
+- (void)xmppStreamManagement:(XMPPStreamManagement *)sender didReceiveAckForStanzaIds:(NSArray *)stanzaIds
+//- (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message
+{
+    DDLogVerbose(@"Surnedra.. : xmppStreamManagement didReceiveAckForStanzaIds: with stanzaIds = %@", stanzaIds);
+    if stanzaIds.count > 0
+    {
+        [self.delegate onMessageSent:stanzaIds[0]];
+    }
+}
 
 
 - (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message
@@ -592,6 +601,32 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
         [msg addChild:[NSXMLElement elementWithName:@"thread" stringValue:thread]];
     }
 
+    [msg addChild:body];
+    // Fuad
+    [self.delegate onMessageCreated:[XMPPMessage messageFromElement:msg]];
+    [xmppStream sendElement:msg];
+}
+
+//Surendra
+-(void)sendMessageUpdated:(NSString *)text to:(NSString *)to thread:(NSString *)thread messageId:(NSString*)messageId{
+    if (!isXmppConnected){
+        [self.delegate onError:[NSError errorWithDomain:@"xmpp" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Server is not connected, please reconnect"}]];
+        return;
+    }
+    DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
+    NSXMLElement *body = [NSXMLElement elementWithName:@"body"];
+    [body setStringValue:text];
+    
+    NSXMLElement *msg = [NSXMLElement elementWithName:@"message"];
+    [msg addAttributeWithName:@"type" stringValue:@"chat"];
+    [msg addAttributeWithName:@"to" stringValue: to];
+    // Fuad
+    [msg addAttributeWithName:@"id" stringValue:[messageId]]; //[xmppStream generateUUID]];
+    
+    if (thread != nil) {
+        [msg addChild:[NSXMLElement elementWithName:@"thread" stringValue:thread]];
+    }
+    
     [msg addChild:body];
     // Fuad
     [self.delegate onMessageCreated:[XMPPMessage messageFromElement:msg]];
@@ -666,6 +701,32 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     [msg addAttributeWithName:@"id" stringValue:[xmppStream generateUUID]];
 
     [[xmppRooms objectForKey:roomJID] sendMessage:msg];
+}
+
+//Surendra
+- (void)sendRoomMessageUpdated:(NSString *)roomJID message:(NSString *)message messageId:(NSString*)messageId{
+    if (!isXmppConnected) {
+        [self.delegate onError:[NSError errorWithDomain:@"xmpp" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Server is not connected, please reconnect"}]];
+        return;
+    }
+    // Fuad
+    //    [[xmppRooms objectForKey:roomJID] sendMessageWithBody:message];
+    if ([message length] == 0) return;
+    
+    NSXMLElement *body = [NSXMLElement elementWithName:@"body" stringValue:message];
+    
+    XMPPMessage *msg = [XMPPMessage message];
+    [msg addChild:body];
+    [msg addAttributeWithName:@"id" stringValue:[messageId]];//[xmppStream generateUUID]];
+    
+    [[xmppRooms objectForKey:roomJID] sendMessage:msg];
+}
+
+//Surendra
+-(void)requestMessageId{
+    DDLogVerbose(@"Surnedra.. : called requestMessageId");
+    NSString *strUUID = [xmppStream generateUUID];
+    [self.delegate onMessageIdGenerated:strUUID];
 }
 
 -(void)leaveRoom:(NSString *)roomJID{
