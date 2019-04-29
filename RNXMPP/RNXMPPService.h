@@ -36,9 +36,9 @@
 -(void)onLoginError:(NSError *)error;
 // Fuad
 -(void)onMessageCreated:(XMPPMessage *)message;
--(void)onMessageDelivered:(XMPPMessage *)message;
+-(void)onMessageDelivered:(NSString *)message;
 
--(void)onMessageSent:(XMPPMessage *)message;
+-(void)onMessageSent:(NSString *)message;
 -(void)onMessageIdGenerated:(NSString *)messageId;
 
 @end
@@ -98,6 +98,7 @@
 //Surendra
 -(void)sendMessageUpdated:(NSString *)text to:(NSString *)to thread:(NSString *)thread messageId:(NSString*)messageId;
 - (void)sendRoomMessageUpdated:(NSString *)roomJID message:(NSString *)message messageId:(NSString*)messageId;
+-(void)requestMessageId;
 
 @end
 

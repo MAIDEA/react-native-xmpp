@@ -15,6 +15,9 @@ var map = {
     'roster': 'RNXMPPRoster',
     'messageCreated': 'RNXMPPMessageCreated',
     'messageDelivered':'RNXMPPMessageDelivered',
+    'messageIDGenerated': 'RNXMPPMessageIdCreated',
+    'messageSent':'RNXMPPMessageSent',
+
     'typingStatus':'RNXMPPTypingStatus',
     
 }
@@ -126,6 +129,15 @@ class XMPP {
         React.NativeModules.RNXMPP.message(text, user, thread);
     }
 
+    messageUpdated(text, user,messageId, thread=null){
+        LOG(`Message: "${text}" being sent to user: ${user}`);
+        React.NativeModules.RNXMPP.messageUpdated(text, user, thread,messageId);
+    }
+
+    requestMessageid(){
+        React.NativeModules.RNXMPP.requestMessageId();
+    }
+
     sendStanza(stanza){
         RNXMPP.sendStanza(stanza);
     }
@@ -169,6 +181,10 @@ class XMPP {
 
     sendRoomMessage(message, roomJID) {
         React.NativeModules.RNXMPP.sendRoomMessage(message, roomJID);
+    }
+
+    sendRoomMessageUpdated(message, roomJID, messageId) {
+        React.NativeModules.RNXMPP.sendRoomMessageUpdated(message, roomJID,messageId);
     }
 
     leaveRoom(roomJID) {

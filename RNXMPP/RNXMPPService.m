@@ -474,7 +474,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 {
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
     if ([xmppStream supportsStreamManagement]){
-        [xmppStreamManagement enableStreamManagementWithResumption:YES maxTimeout:600];
+//        [xmppStreamManagement enableStreamManagementWithResumption:YES maxTimeout:600];
         [xmppStreamManagement automaticallyRequestAcksAfterStanzaCount:1 orTimeout:0];
     }
     
@@ -491,6 +491,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 - (BOOL)xmppStream:(XMPPStream *)sender didReceiveIQ:(XMPPIQ *)iq
 {
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
+    NSLog(@"IQ REcieved: %@", iq);
     [self.delegate onIQ:iq];
 
     return NO;
@@ -539,12 +540,11 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 //- (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message
 {
     DDLogVerbose(@"Surnedra.. : xmppStreamManagement didReceiveAckForStanzaIds: with stanzaIds = %@", stanzaIds);
-    if stanzaIds.count > 0
+    if (stanzaIds.count > 0)
     {
         [self.delegate onMessageSent:stanzaIds[0]];
     }
 }
-
 
 - (void)xmppStream:(XMPPStream *)sender didReceiveMessage:(XMPPMessage *)message
 {
@@ -552,6 +552,8 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     DDLogVerbose(@"MSG RCVD: %@", message);
     if (message.isErrorMessage){
         [self.delegate onError:[message errorMessage]];
+    } else if ([[[message children][0] URI] isEqualToString:@"urn:xmpp:receipts"]) {
+        [self.delegate onMessageDelivered:[(NSXMLElement *)[message children][0] attributeStringValueForName:@"id"]];
     } else {
         [self.delegate onMessage:message];
     }
@@ -621,7 +623,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     [msg addAttributeWithName:@"type" stringValue:@"chat"];
     [msg addAttributeWithName:@"to" stringValue: to];
     // Fuad
-    [msg addAttributeWithName:@"id" stringValue:[messageId]]; //[xmppStream generateUUID]];
+    [msg addAttributeWithName:@"id" stringValue: messageId]; //[xmppStream generateUUID]];
     
     if (thread != nil) {
         [msg addChild:[NSXMLElement elementWithName:@"thread" stringValue:thread]];
@@ -717,7 +719,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     
     XMPPMessage *msg = [XMPPMessage message];
     [msg addChild:body];
-    [msg addAttributeWithName:@"id" stringValue:[messageId]];//[xmppStream generateUUID]];
+    [msg addAttributeWithName:@"id" stringValue: messageId];//[xmppStream generateUUID]];
     
     [[xmppRooms objectForKey:roomJID] sendMessage:msg];
 }
@@ -741,7 +743,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 - (void)xmppStream:(XMPPStream *)sender didSendMessage:(XMPPMessage *)message {
-    [self.delegate onMessageDelivered:message];
+    [self.delegate onMessageSent:message.elementID];
 }
 
 - (void)createRoasterEntry:(NSString *)to name:(NSString *)name {

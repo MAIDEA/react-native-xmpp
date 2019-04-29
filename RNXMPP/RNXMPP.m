@@ -215,20 +215,20 @@ RCT_EXPORT_METHOD(sendRoomMessage:(NSString *)roomJID message:(NSString *)messag
 // Surendra - Start
 RCT_EXPORT_METHOD(requestMessageId)
 {
-    DDLogVerbose(@"Surnedra.. : calling from RCT requestMessageId");
+    NSLog(@"Surnedra.. : calling from RCT requestMessageId");
     [RNXMPPService sharedInstance].delegate = self;
     [[RNXMPPService sharedInstance] requestMessageId];
 }
 
 RCT_EXPORT_METHOD(messageUpdated:(NSString *)text to:(NSString *)to thread:(NSString *)threadId messageId:(NSString*)messageId){
-    DDLogVerbose(@"Surnedra.. : calling from RCT sendMessageUpdated");
+    NSLog(@"Surnedra.. : calling from RCT sendMessageUpdated");
     [RNXMPPService sharedInstance].delegate = self;
     [[RNXMPPService sharedInstance] sendMessageUpdated:text to:to thread:threadId messageId:messageId];
 }
 
 RCT_EXPORT_METHOD(sendRoomMessageUpdated:(NSString *)roomJID message:(NSString *)message messageId:(NSString*)messageId)
 {
-    DDLogVerbose(@"Surnedra.. : calling from RCT sendRoomMessageUpdated");
+    NSLog(@"Surnedra.. : calling from RCT sendRoomMessageUpdated");
     [RNXMPPService sharedInstance].delegate = self;
     [[RNXMPPService sharedInstance] sendRoomMessageUpdated:roomJID message:message messageId:messageId];
 }
@@ -252,13 +252,13 @@ RCT_EXPORT_METHOD(sendRoomMessageUpdated:(NSString *)roomJID message:(NSString *
 #pragma mark - Fuad
 
 -(void)onMessageSent:(NSString *)message {
-    [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageDelivered" body:message];
-    DDLogVerbose(@"Surnedra.. : called RNXMPPMessageDelivered");
+    [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageSent" body:message];
+    NSLog(@"Surnedra.. : called RNXMPPMessageDelivered");
 }
 
 -(void)onMessageIdGenerated:(NSString *)messageId {
     [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageIdCreated" body:messageId];
-    DDLogVerbose(@"Surnedra.. : called RNXMPPMessageIdCreated");
+    NSLog(@"Surnedra.. : called RNXMPPMessageIdCreated");
 }
 
 
@@ -268,8 +268,8 @@ RCT_EXPORT_METHOD(sendRoomMessageUpdated:(NSString *)roomJID message:(NSString *
     [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageCreated" body:res];
 }
 
--(void)onMessageDelivered:(XMPPMessage *)message {
-    [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageDelivered" body:message.elementID];
+-(void)onMessageDelivered:(NSString *)message {
+    [self.bridge.eventDispatcher sendAppEventWithName:@"RNXMPPMessageDelivered" body:message];
 }
 
 RCT_EXPORT_METHOD(createRoasterEntry:(NSString *)to name:(NSString *)name)
