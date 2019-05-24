@@ -18,6 +18,9 @@ import org.jivesoftware.smack.roster.RosterEntry;
 import org.jivesoftware.smack.roster.RosterGroup;
 import org.jivesoftware.smackx.chatstates.ChatState;
 import org.jivesoftware.smackx.chatstates.packet.ChatStateExtension;
+import org.jxmpp.jid.BareJid;
+import org.jxmpp.jid.impl.JidCreate;
+import org.jxmpp.stringprep.XmppStringprepException;
 
 import com.rnxmpp.utils.Parser;
 
@@ -70,11 +73,12 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     public void onMessage(Message message) {
         WritableMap params = Arguments.createMap();
 
+
         params.putString("_id", message.getStanzaId());
         params.putString("thread", message.getThread());
         params.putString("subject", message.getSubject());
-        params.putString("from", message.getFrom());
-        params.putString("src", message.toXML().toString());
+        params.putString("from", message.getFrom().toString());
+        params.putString("src", message.toXML("").toString());
         if(message.getBody()!=null) {
             params.putString("body", message.getBody());
             sendEvent(reactContext, RNXMPP_MESSAGE, params);
@@ -85,7 +89,7 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
                 ChatStateExtension extension= (ChatStateExtension) message.getExtension(ChatStateExtension.NAMESPACE);
                 ChatState state = extension.getChatState();
                 WritableMap paramStatus = Arguments.createMap();
-                paramStatus.putString("from", message.getFrom());
+                paramStatus.putString("from", message.getFrom().toString());
                 paramStatus.putString("status", state.name());
 
                 sendEvent(reactContext, RNXMPP_TYPINGSTATUS, paramStatus);
@@ -111,8 +115,8 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
         params.putString("thread", message.getThread());
         params.putString("subject", message.getSubject());
         params.putString("body", message.getBody());
-        params.putString("from", message.getFrom());
-        params.putString("src", message.toXML().toString());
+        params.putString("from", message.getFrom().toString());
+        params.putString("src", message.toXML("").toString());
         sendEvent(reactContext, RNXMPP_MESSAGE_CREATED, params);
     }
 
@@ -129,7 +133,7 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
             rosterProps.putString("username", rosterEntry.getUser());
             rosterProps.putString("displayName", rosterEntry.getName());
 
-            Presence availability = roster.getPresence(rosterEntry.getUser());
+            Presence availability = roster.getPresence(rosterEntry.getJid());
             rosterProps.putString("presence",availability.getType().name());
 
             WritableArray groupArray = Arguments.createArray();
@@ -152,7 +156,7 @@ public class RNXMPPCommunicationBridge implements XmppServiceListener {
     public void onPresence(Presence presence) {
         WritableMap presenceMap = Arguments.createMap();
         presenceMap.putString("type", presence.getType().toString());
-        presenceMap.putString("from", presence.getFrom());
+        presenceMap.putString("from", presence.getFrom().toString());
         presenceMap.putString("status", presence.getStatus());
         presenceMap.putString("mode", presence.getMode().toString());
         sendEvent(reactContext, RNXMPP_PRESENCE, presenceMap);
