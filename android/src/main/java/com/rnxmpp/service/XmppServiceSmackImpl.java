@@ -150,7 +150,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         XMPPTCPConnectionConfiguration.Builder confBuilder = null;
         try {
 
-            InetAddress inetAddress = getInetAddressByName("mntto.com");
+            InetAddress inetAddress = getInetAddressByName(hostname);
             HostnameVerifier verifier = new HostnameVerifier() {
                 @Override
                 public boolean verify(String hostname, SSLSession session) {
@@ -228,37 +228,37 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
     public void joinRoom(String roomJid, String userNickname,String lastMessage) {
 
         if (connection != null) {
-            MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
             try {
-                MultiUserChat muc = manager.getMultiUserChat(JidCreate.entityBareFrom(roomJid));
-                try {
-                    Log.e("Date is", lastMessage);
-                    DiscussionHistory history = new DiscussionHistory();
-                    Calendar c = Calendar.getInstance();
-                    long val = Long.parseLong(lastMessage);
-                    c.setTimeInMillis(val);
-                    c.add(Calendar.SECOND, 1);
-                    history.setSince(c.getTime());
-                    Log.e("Date is", "" + c.getTime());
-                    //history.setMaxStanzas(0);
+                MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
 
-                    if (muc.isJoined()) {
-                        sendOnlinePresence(muc, roomJid, userNickname, c.getTime());
-                    } else {
-                        muc.join(Resourcepart.fromOrNull(userNickname), "", history, connection.getReplyTimeout());
-                        groupMessageListner = new XmppGroupMessageListenerImpl(this.xmppServiceListener, logger);
-                        muc.addMessageListener(groupMessageListner);
-                    }
-                } catch (SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
-                    logger.log(Level.WARNING, "Could not join chat room", e);
+                MultiUserChat muc = manager.getMultiUserChat(JidCreate.entityBareFrom(roomJid));
+                DiscussionHistory history = new DiscussionHistory();
+                  Calendar c = Calendar.getInstance();
+                if(lastMessage == null) {
+                    history.setMaxStanzas(0);
+                } else {
+                    c.setTimeInMillis(Long.parseLong(lastMessage));
+                    history.setSince(c.getTime());
                 }
+
+                if (muc.isJoined()) {
+                    sendOnlinePresence(muc, roomJid, userNickname, c.getTime());
+                } else {
+                    muc.join(Resourcepart.fromOrNull(userNickname), "", history, connection.getReplyTimeout());
+                    groupMessageListner = new XmppGroupMessageListenerImpl(this.xmppServiceListener, logger);
+                    muc.addMessageListener(groupMessageListner);
+                }
+            } catch (SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
+                logger.log(Level.WARNING, "Could not join chat room", e);
+            } catch (Exception e){
+                logger.log(Level.WARNING, "Could not join chat room", e);
+                XmppServiceSmackImpl.this.xmppServiceListener.onError(e);
             }
-            catch (Exception e){}
         }
     }
 
 
-    private void sendOnlinePresence(MultiUserChat muc,String room,String nickname,Date date ){
+    private void sendOnlinePresence(MultiUserChat muc,String room,String nickname, Date date){
         Presence joinPresence = new Presence(Presence.Type.available);
         joinPresence.setTo(room + "/" + nickname);
         MUCInitialPresence mucInitialPresence = new MUCInitialPresence();
@@ -269,7 +269,9 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         try {
             connection.sendStanza(joinPresence);
         }
-        catch (Exception e){}
+        catch (Exception e){
+          logger.log(Level.WARNING, "Could not sendOnlinePresence", e);
+        }
     }
 
 
@@ -282,11 +284,11 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             muc.sendMessage(text);
         } catch (SmackException e) {
             logger.log(Level.WARNING, "Could not send group message", e);
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (XmppStringprepException e) {
-            e.printStackTrace();
-        }
+            logger.log(Level.WARNING, "Could not sendRoomMessage", e);
+          }
+
     }
 
     public void sendRoomMessageUpdated(String roomJid, String text,String messageId) {
@@ -311,10 +313,9 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         } catch (SmackException e) {
             logger.log(Level.WARNING, "Could not send group message", e);
             xmppServiceListener.onDisconnect(null);
-        } catch (InterruptedException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        } catch (XmppStringprepException e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING, "Could not send group message", e);
         }
     }
 
@@ -333,7 +334,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             e.printStackTrace();
         } catch (XmppStringprepException e) {
             e.printStackTrace();
-        }
+        } 
     }
 
     @Override

@@ -2,6 +2,8 @@
 
 An XMPP library for React Native.
 
+Originally aksonov/react-native-xmpp with some improvements
+
 A simple interface for native XMPP communication. Both iOS and Android are supported.
 
 ## Demo
@@ -36,7 +38,10 @@ XMPP.trustHosts(["chat.google.com"]);
 // connect
 XMPP.connect(
   MYJID,
-  MYPASSWORD
+  MYPASSWORD,
+  auth = XMPP.PLAIN,
+  hostname = null,
+  port = 5222
 );
 
 // send message
@@ -44,7 +49,7 @@ XMPP.message("Hello world!", TOJID);
 
 // join room(s)
 XMPP.joinRoom(ROOMJID_1, ROOMNICKNAME);
-XMPP.joinRoom(ROOMJID_2, ROOMNICKNAME);
+XMPP.joinRoom(ROOMJID_2, ROOMNICKNAME, HISTORY_SINCE_TIMESTAMP_MS);
 
 // send message to room(s)
 XMPP.sendRoomMessage(ROOMJID_1, "Hello room 1!");

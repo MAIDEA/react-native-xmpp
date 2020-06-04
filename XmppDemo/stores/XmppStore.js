@@ -10,7 +10,7 @@ class XmppStore {
     @observable loginError = null;
     @observable error = null;
     @observable conversation = [];
-    
+
     constructor() {
         XMPP.on('loginError', this.onLoginError);
         XMPP.on('error', this.onError);
@@ -21,14 +21,14 @@ class XmppStore {
         this.local = 'rntestuser1';
         this.remote = 'rntestuser2';
     }
-    
+
     _userForName(name){
         return name + '@' + DOMAIN + "/" + SCHEMA;
     }
 
     sendMessage(message){
         if (!this.remote || !this.remote.trim()){
-            console.error("No remote username is defined");
+            console.error("react-native-xmpp store: No remote username is defined");
         }
         if (!message || !message.trim()){
             return false;
@@ -42,7 +42,7 @@ class XmppStore {
     }
 
     onReceiveMessage({from, body}){
-        console.log("onReceiveMessage")
+        console.log("react-native-xmpp store: onReceiveMessage")
         // extract username from XMPP UID
         if (!from || !body){
             return;
@@ -67,7 +67,7 @@ class XmppStore {
     }
 
     onLogin(){
-        console.log("LOGGED!");
+        console.log("react-native-xmpp store: onLogin");
         this.conversation.replace([]);
         this.loading = false;
         this.loginError = null;
