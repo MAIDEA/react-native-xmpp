@@ -54,13 +54,13 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
     }
 
     @ReactMethod
-    public void sendRoomMessage(String mucJid, String text) {
-        this.xmppService.sendRoomMessage(mucJid, text);
+    public void sendRoomMessage(String mucJid, String text, String messageId) {
+        this.xmppService.sendRoomMessage(mucJid, text, messageId);
     }
 
     @ReactMethod
-    public void sendRoomMessageUpdated(String mucJid, String text,String messageId) {
-        this.xmppService.sendRoomMessageUpdated(mucJid, text,messageId);
+    public void sendRoomMessageUpdated(String mucJid, String text, String messageId) {
+        this.xmppService.sendRoomMessageUpdated(mucJid, text, messageId);
     }
 
     @ReactMethod

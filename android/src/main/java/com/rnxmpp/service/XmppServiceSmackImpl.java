@@ -151,12 +151,14 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         try {
 
             InetAddress inetAddress = getInetAddressByName(hostname);
-            HostnameVerifier verifier = new HostnameVerifier() {
+
+            HostnameVerifier noVerify = new HostnameVerifier() {
                 @Override
                 public boolean verify(String hostname, SSLSession session) {
                     return true;
                 }
             };
+
 
 
             username = jidParts[0];
@@ -165,10 +167,16 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
                     .setUsernameAndPassword(jidParts[0], password)
                     .setXmppDomain(serName)
                     .setConnectTimeout(20000)
-                    .setHostnameVerifier(verifier)
-
                     .setHostAddress(inetAddress)
                     .setSecurityMode(SecurityMode.disabled);
+
+  //       if (hostname != null){
+  //            confBuilder.setHost(hostname);
+  //        }
+
+            if(trustedHosts.contains(hostname)){
+              confBuilder.setHostnameVerifier(noVerify);
+            }
 
             if (serviceNameParts.length>1){
                 confBuilder.setResource(serviceNameParts[1]);
@@ -182,25 +190,9 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         }
 
 
-//       if (hostname != null){
-//            confBuilder.setHost(hostname);
-//        }
-
         if (port != null){
             confBuilder.setPort(port);
         }
-
-//        if (trustedHosts.contains(hostname) || (hostname == null && trustedHosts.contains(serviceName))){
-//            confBuilder.setSecurityMode(SecurityMode.disabled);
-//              TLSUtils.disableHostnameVerificationForTlsCertificates(confBuilder);
-//              //TLSUtils.disableHostnameVerificationForTlsCertificicates(confBuilder);
-//            try {
-//                TLSUtils.acceptAllCertificates(confBuilder);
-//            } catch (NoSuchAlgorithmException | KeyManagementException e) {
-//                e.printStackTrace();
-//            }
-//        }
-
 
         XMPPTCPConnectionConfiguration connectionConfiguration = confBuilder.build();
         try {
@@ -275,13 +267,27 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
     }
 
 
-    public void sendRoomMessage(String roomJid, String text) {
+    public void sendRoomMessage(String roomJid, String text, String messageId) {
 
         MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
 
         try {
             MultiUserChat muc = mucManager.getMultiUserChat(JidCreate.entityBareFrom(roomJid));
-            muc.sendMessage(text);
+
+            Message message = muc.createMessage();
+            message.setBody(text);
+            if(messageId != null){
+              message.setStanzaId(messageId);
+            }
+            muc.sendMessage(message);
+
+            connection.addStanzaIdAcknowledgedListener(message.getStanzaId(), new StanzaListener() {
+                @Override
+                public void processStanza(Stanza packet) throws SmackException.NotConnectedException {
+                   xmppServiceListener.onMessageSent(packet.getStanzaId());
+                }
+            });
+
         } catch (SmackException e) {
             logger.log(Level.WARNING, "Could not send group message", e);
         } catch (Exception e) {
@@ -291,7 +297,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
 
     }
 
-    public void sendRoomMessageUpdated(String roomJid, String text,String messageId) {
+    public void sendRoomMessageUpdated(String roomJid, String text, String messageId) {
 
         MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
 
@@ -334,7 +340,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             e.printStackTrace();
         } catch (XmppStringprepException e) {
             e.printStackTrace();
-        } 
+        }
     }
 
     @Override

@@ -88,7 +88,7 @@
 - (void)fetchRoster;
 - (void)sendStanza:(NSString *)stanza;
 - (void)joinRoom:(NSString *)roomJID nickName:(NSString *)nickname;
-- (void)sendRoomMessage:(NSString *)roomJID message:(NSString *)message;
+- (void)sendRoomMessage:(NSString *)roomJID message:(NSString *)message messageId:(NSString*)messageId;
 - (void)leaveRoom:(NSString *)roomJID;
 // Fuad
 - (void)createRoasterEntry:(NSString *)to name:(NSString *)name;

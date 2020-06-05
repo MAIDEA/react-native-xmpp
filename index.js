@@ -19,7 +19,7 @@ var map = {
     'messageSent':'RNXMPPMessageSent',
 
     'typingStatus':'RNXMPPTypingStatus',
-    
+
 }
 
 const LOG = (message) => {
@@ -32,7 +32,7 @@ class XMPP {
     PLAIN = RNXMPP.PLAIN;
     SCRAM = RNXMPP.SCRAMSHA1;
     MD5 = RNXMPP.DigestMD5;
-    
+
 
     constructor(){
         this.isConnected = false;
@@ -109,7 +109,7 @@ class XMPP {
             NativeAppEventEmitter.addListener(map.loginError, this.onLoginError.bind(this)),
             NativeAppEventEmitter.addListener(map.login, this.onLogin.bind(this)),
         ];
-        
+
         LOG('All event listeners removed');
     }
 
@@ -150,7 +150,7 @@ class XMPP {
         React.NativeModules.RNXMPP.presence(to, type);
     }
 
-    
+
 
     removeFromRoster(to){
         React.NativeModules.RNXMPP.removeRoster(to);
@@ -179,8 +179,8 @@ class XMPP {
         React.NativeModules.RNXMPP.joinRoom(roomJID, nickname,lastMessageTimeStamp);
     }
 
-    sendRoomMessage(message, roomJID) {
-        React.NativeModules.RNXMPP.sendRoomMessage(message, roomJID);
+    sendRoomMessage(message, roomJID, messageId = null) {
+        React.NativeModules.RNXMPP.sendRoomMessage(message, roomJID, messageId);
     }
 
     sendRoomMessageUpdated(message, roomJID, messageId) {

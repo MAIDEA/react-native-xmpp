@@ -204,10 +204,10 @@ RCT_EXPORT_METHOD(leaveRoom:(NSString *)roomJID)
     [[RNXMPPService sharedInstance] leaveRoom:roomJID];
 }
 
-RCT_EXPORT_METHOD(sendRoomMessage:(NSString *)roomJID message:(NSString *)message)
+RCT_EXPORT_METHOD(sendRoomMessage:(NSString *)roomJID message:(NSString *)message messageId:(NSString *)messageId)
 {
     [RNXMPPService sharedInstance].delegate = self;
-    [[RNXMPPService sharedInstance] sendRoomMessage:roomJID message:message];
+    [[RNXMPPService sharedInstance] sendRoomMessage:roomJID message:message messageId: messageId];
 }
 
 

@@ -34,7 +34,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 #pragma mark -
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
- @implementation RNXMPPService
+@implementation RNXMPPService
 
 @synthesize xmppStream;
 @synthesize xmppReconnect;
@@ -171,13 +171,13 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     [xmppReconnect         activate:xmppStream];
     [xmppRoster            activate:xmppStream];
     [xmppRoster addDelegate:self delegateQueue:dispatch_get_main_queue()];
-    
+
     xmppStreamManagentStorage = [[XMPPStreamManagementMemoryStorage alloc] init];
     xmppStreamManagement = [[XMPPStreamManagement alloc] initWithStorage:xmppStreamManagentStorage];
 //    [xmppStreamManagement activate:xmppStream];
     xmppStreamManagement.autoResume = YES;
     [xmppStreamManagement addDelegate:self  delegateQueue:dispatch_get_main_queue()];
-    
+
 //    [xmppvCardTempModule   activate:xmppStream];
 //    [xmppvCardAvatarModule activate:xmppStream];
 //    [xmppCapabilities      activate:xmppStream];
@@ -209,7 +209,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 
     // You may need to alter these settings depending on the server you're connecting to
     customCertEvaluation = YES;
-    
+
     // init xmppRooms dict
     xmppRooms = [NSMutableDictionary dictionary];
 }
@@ -285,14 +285,14 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     if (myJID == nil || myPassword == nil) {
         return NO;
     }
-    
+
     NSLog(@"Connect using JID %@", myJID);
 
     [xmppStream setMyJID:[XMPPJID jidWithString:myJID]];
     username = myJID;
     password = myPassword;
     authMethod = auth;
-    
+
     xmppStream.hostName = (hostname ? hostname : [username componentsSeparatedByString:@"@"][1]);
     if(port){
         xmppStream.hostPort = port;
@@ -307,7 +307,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
             if (self.delegate){
                 [self.delegate onLoginError:error];
             }
-            
+
             return NO;
         }
     } else {
@@ -317,7 +317,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
             if (self.delegate){
                 [self.delegate onLoginError:error];
             }
-            
+
             return NO;
         }
     }
@@ -405,7 +405,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     // The delegate method should likely have code similar to this,
     // but will presumably perform some extra security code stuff.
     // For example, allowing a specific self-signed certificate that is known to the app.
-    
+
     if ([trustedHosts containsObject:xmppStream.hostName]) {
         completionHandler(YES);
     }
@@ -477,7 +477,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 //        [xmppStreamManagement enableStreamManagementWithResumption:YES maxTimeout:600];
         [xmppStreamManagement automaticallyRequestAcksAfterStanzaCount:1 orTimeout:0];
     }
-    
+
     [self goOnline];
     [self.delegate onLogin:username password:password];
 }
@@ -598,7 +598,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     [msg addAttributeWithName:@"to" stringValue: to];
     // Fuad
     [msg addAttributeWithName:@"id" stringValue:[xmppStream generateUUID]];
-    
+
     if (thread != nil) {
         [msg addChild:[NSXMLElement elementWithName:@"thread" stringValue:thread]];
     }
@@ -618,17 +618,17 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     DDLogVerbose(@"%@: %@", THIS_FILE, THIS_METHOD);
     NSXMLElement *body = [NSXMLElement elementWithName:@"body"];
     [body setStringValue:text];
-    
+
     NSXMLElement *msg = [NSXMLElement elementWithName:@"message"];
     [msg addAttributeWithName:@"type" stringValue:@"chat"];
     [msg addAttributeWithName:@"to" stringValue: to];
     // Fuad
     [msg addAttributeWithName:@"id" stringValue: messageId]; //[xmppStream generateUUID]];
-    
+
     if (thread != nil) {
         [msg addChild:[NSXMLElement elementWithName:@"thread" stringValue:thread]];
     }
-    
+
     [msg addChild:body];
     // Fuad
     [self.delegate onMessageCreated:[XMPPMessage messageFromElement:msg]];
@@ -687,7 +687,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     [xmppRoom joinRoomUsingNickname:nickname history:history password:nil];
 }
 
-- (void)sendRoomMessage:(NSString *)roomJID message:(NSString *)message{
+- (void)sendRoomMessage:(NSString *)roomJID message:(NSString *)message messageId:(NSString*)messageId{
     if (!isXmppConnected) {
         [self.delegate onError:[NSError errorWithDomain:@"xmpp" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Server is not connected, please reconnect"}]];
         return;
@@ -700,7 +700,11 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 
     XMPPMessage *msg = [XMPPMessage message];
     [msg addChild:body];
-    [msg addAttributeWithName:@"id" stringValue:[xmppStream generateUUID]];
+    if ([messageId length] == 0){
+      [msg addAttributeWithName:@"id" stringValue:[xmppStream generateUUID]];
+    } else {
+      [msg addAttributeWithName:@"id" stringValue:messageId];
+    }
 
     [[xmppRooms objectForKey:roomJID] sendMessage:msg];
 }
@@ -714,13 +718,13 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     // Fuad
     //    [[xmppRooms objectForKey:roomJID] sendMessageWithBody:message];
     if ([message length] == 0) return;
-    
+
     NSXMLElement *body = [NSXMLElement elementWithName:@"body" stringValue:message];
-    
+
     XMPPMessage *msg = [XMPPMessage message];
     [msg addChild:body];
     [msg addAttributeWithName:@"id" stringValue: messageId];//[xmppStream generateUUID]];
-    
+
     [[xmppRooms objectForKey:roomJID] sendMessage:msg];
 }
 
