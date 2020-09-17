@@ -267,7 +267,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
     }
 
 
-    public void sendRoomMessage(String roomJid, String text, String messageId) {
+    public void sendRoomMessage(String roomJid, String text, String subject, String messageId) {
 
         MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
 
@@ -276,6 +276,9 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
 
             Message message = muc.createMessage();
             message.setBody(text);
+            if(subject != null){
+              message.setSubject(subject)
+            }
             if(messageId != null){
               message.setStanzaId(messageId);
             }
@@ -297,16 +300,18 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
 
     }
 
-    public void sendRoomMessageUpdated(String roomJid, String text, String messageId) {
+    public void sendRoomMessageUpdated(String roomJid, String text, String subject, String messageId) {
 
         MultiUserChatManager mucManager = MultiUserChatManager.getInstanceFor(connection);
-
 
         try {
             MultiUserChat muc = mucManager.getMultiUserChat(JidCreate.entityBareFrom(roomJid));
             Message message = muc.createMessage();
             message.setBody(text);
             message.setStanzaId(messageId);
+            if(subject != null){
+              message.setSubject(subject)
+            }
 
             muc.sendMessage(message);
             connection.addStanzaIdAcknowledgedListener(messageId, new StanzaListener() {

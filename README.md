@@ -53,7 +53,7 @@ XMPP.joinRoom(ROOMJID_2, ROOMNICKNAME, HISTORY_SINCE_TIMESTAMP_MS);
 
 // send message to room(s)
 XMPP.sendRoomMessage(ROOMJID_1, "Hello room 1!");
-XMPP.sendRoomMessage(ROOMJID_2, "Hello room 2!");
+XMPP.sendRoomMessage(ROOMJID_2, "Hello room 2!", "Optional Message Subject");
 
 // leave room(s)
 XMPP.leaveRoom(ROOMJID_1);

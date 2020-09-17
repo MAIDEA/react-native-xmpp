@@ -179,12 +179,12 @@ class XMPP {
         React.NativeModules.RNXMPP.joinRoom(roomJID, nickname,lastMessageTimeStamp);
     }
 
-    sendRoomMessage(roomJID, message, messageId = null) {
-        React.NativeModules.RNXMPP.sendRoomMessage(roomJID, message, messageId);
+    sendRoomMessage(roomJID, message, subject = null, messageId = null) {
+        React.NativeModules.RNXMPP.sendRoomMessage(roomJID, message, subject, messageId);
     }
 
-    sendRoomMessageUpdated(roomJID, message, messageId) {
-        React.NativeModules.RNXMPP.sendRoomMessageUpdated(roomJID, message, messageId);
+    sendRoomMessageUpdated(roomJID, message, subject, messageId) {
+        React.NativeModules.RNXMPP.sendRoomMessageUpdated(roomJID, message, subject, messageId);
     }
 
     leaveRoom(roomJID) {

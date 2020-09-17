@@ -20,10 +20,10 @@ public interface XmppService {
     void joinRoom(String mucJid, String userNickname, String lastMessage);
 
     @ReactMethod
-    void sendRoomMessage(String roomJid, String text, String messageId);
+    void sendRoomMessage(String roomJid, String text, String subject, String messageId);
 
     @ReactMethod
-    void sendRoomMessageUpdated(String roomJid, String text, String messageId);
+    void sendRoomMessageUpdated(String roomJid, String text, String subject, String messageId);
 
     @ReactMethod
     void leaveRoom(String mucJid);

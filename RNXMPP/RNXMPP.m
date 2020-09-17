@@ -29,7 +29,7 @@ RCT_ENUM_CONVERTER(AuthMethod, (@{ PLAIN_AUTH : @(Plain),
     // Fuad
     RCTResponseSenderBlock onMessageCreated;
     RCTResponseSenderBlock onMessageDelivered;
-    
+
     //Surendra
     RCTResponseSenderBlock onMessageSent;
     RCTResponseSenderBlock onMessageIdGenerated;
@@ -204,10 +204,10 @@ RCT_EXPORT_METHOD(leaveRoom:(NSString *)roomJID)
     [[RNXMPPService sharedInstance] leaveRoom:roomJID];
 }
 
-RCT_EXPORT_METHOD(sendRoomMessage:(NSString *)roomJID message:(NSString *)message messageId:(NSString *)messageId)
+RCT_EXPORT_METHOD(sendRoomMessage:(NSString *)roomJID message:(NSString *)message subject:(NSString *)subject messageId:(NSString *)messageId)
 {
     [RNXMPPService sharedInstance].delegate = self;
-    [[RNXMPPService sharedInstance] sendRoomMessage:roomJID message:message messageId: messageId];
+    [[RNXMPPService sharedInstance] sendRoomMessage:roomJID message:message subject:subject messageId:messageId];
 }
 
 
@@ -226,11 +226,11 @@ RCT_EXPORT_METHOD(messageUpdated:(NSString *)text to:(NSString *)to thread:(NSSt
     [[RNXMPPService sharedInstance] sendMessageUpdated:text to:to thread:threadId messageId:messageId];
 }
 
-RCT_EXPORT_METHOD(sendRoomMessageUpdated:(NSString *)roomJID message:(NSString *)message messageId:(NSString*)messageId)
+RCT_EXPORT_METHOD(sendRoomMessageUpdated:(NSString *)roomJID message:(NSString *)message subject:(NSString *)subject messageId:(NSString*)messageId)
 {
     NSLog(@"Surnedra.. : calling from RCT sendRoomMessageUpdated");
     [RNXMPPService sharedInstance].delegate = self;
-    [[RNXMPPService sharedInstance] sendRoomMessageUpdated:roomJID message:message messageId:messageId];
+    [[RNXMPPService sharedInstance] sendRoomMessageUpdated:roomJID message:message subject:subject messageId:messageId];
 }
 
 // Surendra - End

@@ -687,7 +687,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     [xmppRoom joinRoomUsingNickname:nickname history:history password:nil];
 }
 
-- (void)sendRoomMessage:(NSString *)roomJID message:(NSString *)message messageId:(NSString*)messageId{
+- (void)sendRoomMessage:(NSString *)roomJID message:(NSString *)message subject:(NSString *)subject messageId:(NSString*)messageId{
     if (!isXmppConnected) {
         [self.delegate onError:[NSError errorWithDomain:@"xmpp" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Server is not connected, please reconnect"}]];
         return;
@@ -700,6 +700,12 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 
     XMPPMessage *msg = [XMPPMessage message];
     [msg addChild:body];
+
+    if ([subject length] > 0){
+      NSXMLElement *subjectEl = [NSXMLElement elementWithName:@"subject" stringValue:subject];
+      [msg addChild:subjectEl];
+    }
+
     if ([messageId length] == 0){
       [msg addAttributeWithName:@"id" stringValue:[xmppStream generateUUID]];
     } else {
@@ -710,7 +716,7 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 }
 
 //Surendra
-- (void)sendRoomMessageUpdated:(NSString *)roomJID message:(NSString *)message messageId:(NSString*)messageId{
+- (void)sendRoomMessageUpdated:(NSString *)roomJID message:(NSString *)message subject:(NSString *)subject messageId:(NSString*)messageId{
     if (!isXmppConnected) {
         [self.delegate onError:[NSError errorWithDomain:@"xmpp" code:0 userInfo:@{NSLocalizedDescriptionKey: @"Server is not connected, please reconnect"}]];
         return;
@@ -723,6 +729,10 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
 
     XMPPMessage *msg = [XMPPMessage message];
     [msg addChild:body];
+    if ([subject length] > 0){
+      NSXMLElement *subjectEl = [NSXMLElement elementWithName:@"subject" stringValue:subject];
+      [msg addChild:subjectEl];
+    }
     [msg addAttributeWithName:@"id" stringValue: messageId];//[xmppStream generateUUID]];
 
     [[xmppRooms objectForKey:roomJID] sendMessage:msg];

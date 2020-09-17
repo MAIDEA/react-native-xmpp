@@ -88,7 +88,7 @@
 - (void)fetchRoster;
 - (void)sendStanza:(NSString *)stanza;
 - (void)joinRoom:(NSString *)roomJID nickName:(NSString *)nickname;
-- (void)sendRoomMessage:(NSString *)roomJID message:(NSString *)message messageId:(NSString*)messageId;
+- (void)sendRoomMessage:(NSString *)roomJID message:(NSString *)message subject:(NSString *)subject messageId:(NSString*)messageId;
 - (void)leaveRoom:(NSString *)roomJID;
 // Fuad
 - (void)createRoasterEntry:(NSString *)to name:(NSString *)name;
@@ -97,7 +97,7 @@
 
 //Surendra
 -(void)sendMessageUpdated:(NSString *)text to:(NSString *)to thread:(NSString *)thread messageId:(NSString*)messageId;
-- (void)sendRoomMessageUpdated:(NSString *)roomJID message:(NSString *)message messageId:(NSString*)messageId;
+- (void)sendRoomMessageUpdated:(NSString *)roomJID message:(NSString *)message subject:(NSString *)subject messageId:(NSString*)messageId;
 -(void)requestMessageId;
 
 @end
