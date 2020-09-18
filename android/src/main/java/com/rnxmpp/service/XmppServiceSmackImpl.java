@@ -277,7 +277,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             Message message = muc.createMessage();
             message.setBody(text);
             if(subject != null){
-              message.setSubject(subject)
+              message.setSubject(subject);
             }
             if(messageId != null){
               message.setStanzaId(messageId);
@@ -310,7 +310,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             message.setBody(text);
             message.setStanzaId(messageId);
             if(subject != null){
-              message.setSubject(subject)
+              message.setSubject(subject);
             }
 
             muc.sendMessage(message);
