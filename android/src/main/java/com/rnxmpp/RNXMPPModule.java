@@ -10,7 +10,7 @@ import com.facebook.react.bridge.ReadableArray;
 import org.jivesoftware.smackx.muc.MultiUserChat;
 import org.jivesoftware.smackx.muc.MultiUserChatManager;
 
-import java.util.logging.Logger;
+import android.util.Log;
 
 import com.rnxmpp.service.RNXMPPCommunicationBridge;
 import com.rnxmpp.service.XmppServiceSmackImpl;
@@ -22,7 +22,6 @@ import com.rnxmpp.service.XmppServiceSmackImpl;
 public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxmpp.service.XmppService {
 
     public static final String MODULE_NAME = "RNXMPP";
-    Logger logger = Logger.getLogger(RNXMPPModule.class.getName());
     XmppServiceSmackImpl xmppService;
 
     public RNXMPPModule(ReactApplicationContext reactContext) {
@@ -48,9 +47,11 @@ public class RNXMPPModule extends ReactContextBaseJavaModule implements com.rnxm
     }
 
     @ReactMethod
-    public void joinRoom(String mucJid, String userNickname,String timestamp) {
-        if(!TextUtils.isEmpty(userNickname))
-        this.xmppService.joinRoom(mucJid, userNickname,timestamp);
+    public void joinRoom(String mucJid, String userNickname, String timestamp) {
+        if(TextUtils.isEmpty(userNickname)){
+          Log.w("react-native-xmpp", "Cant join room, nickname empty");
+        }
+        this.xmppService.joinRoom(mucJid, userNickname, timestamp);
     }
 
     @ReactMethod

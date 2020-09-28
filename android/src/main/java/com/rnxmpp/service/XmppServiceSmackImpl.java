@@ -66,8 +66,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Handler;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSession;
@@ -80,7 +78,7 @@ import javax.net.ssl.SSLSession;
 
 public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, ChatManagerListener, StanzaListener, ConnectionListener, ChatStateListener, RosterLoadedListener,ReceiptReceivedListener {
     XmppServiceListener xmppServiceListener;
-    Logger logger = Logger.getLogger(XmppServiceSmackImpl.class.getName());
+
     XmppGroupMessageListenerImpl groupMessageListner;
 
     XMPPTCPConnection connection;
@@ -197,6 +195,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         XMPPTCPConnectionConfiguration connectionConfiguration = confBuilder.build();
         try {
             connection = new XMPPTCPConnection(connectionConfiguration);
+            Log.i("react-native-xmpp", "XMPP connected");
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -218,34 +217,34 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
 
 
     public void joinRoom(String roomJid, String userNickname,String lastMessage) {
+        try {
+            MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
 
-        if (connection != null) {
-            try {
-                MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
-
-                MultiUserChat muc = manager.getMultiUserChat(JidCreate.entityBareFrom(roomJid));
-                DiscussionHistory history = new DiscussionHistory();
-                  Calendar c = Calendar.getInstance();
-                if(lastMessage == null) {
-                    history.setMaxStanzas(0);
-                } else {
-                    c.setTimeInMillis(Long.parseLong(lastMessage));
-                    history.setSince(c.getTime());
-                }
-
-                if (muc.isJoined()) {
-                    sendOnlinePresence(muc, roomJid, userNickname, c.getTime());
-                } else {
-                    muc.join(Resourcepart.fromOrNull(userNickname), "", history, connection.getReplyTimeout());
-                    groupMessageListner = new XmppGroupMessageListenerImpl(this.xmppServiceListener, logger);
-                    muc.addMessageListener(groupMessageListner);
-                }
-            } catch (SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
-                logger.log(Level.WARNING, "Could not join chat room", e);
-            } catch (Exception e){
-                logger.log(Level.WARNING, "Could not join chat room", e);
-                XmppServiceSmackImpl.this.xmppServiceListener.onError(e);
+            MultiUserChat muc = manager.getMultiUserChat(JidCreate.entityBareFrom(roomJid));
+            DiscussionHistory history = new DiscussionHistory();
+              Calendar c = Calendar.getInstance();
+            if(lastMessage == null) {
+                history.setMaxStanzas(0);
+            } else {
+                c.setTimeInMillis(Long.parseLong(lastMessage));
+                history.setSince(c.getTime());
             }
+
+            if (muc.isJoined()) {
+                Log.i("react-native-xmpp", "XMPP joinRoom - already joined");
+                sendOnlinePresence(muc, roomJid, userNickname, c.getTime());
+            } else {
+                Log.i("react-native-xmpp", "XMPP joinRoom - joining now");
+                muc.join(Resourcepart.fromOrNull(userNickname), "", history, connection.getReplyTimeout());
+                groupMessageListner = new XmppGroupMessageListenerImpl(this.xmppServiceListener);
+                muc.addMessageListener(groupMessageListner);
+            }
+        } catch (SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
+            Log.w("react-native-xmpp", "Could not join chat room" + e.toString());
+            XmppServiceSmackImpl.this.xmppServiceListener.onError(e);
+        } catch (Exception e){
+            Log.w("react-native-xmpp", "Could not join chat room" + e.toString());
+            XmppServiceSmackImpl.this.xmppServiceListener.onError(e);
         }
     }
 
@@ -262,7 +261,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             connection.sendStanza(joinPresence);
         }
         catch (Exception e){
-          logger.log(Level.WARNING, "Could not sendOnlinePresence", e);
+          Log.w("react-native-xmpp", "Could not sendOnlinePresence" + e.toString());
         }
     }
 
@@ -292,10 +291,10 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             });
 
         } catch (SmackException e) {
-            logger.log(Level.WARNING, "Could not send group message", e);
+            Log.w("react-native-xmpp", "Could not send group message" + e.toString());
         } catch (Exception e) {
             e.printStackTrace();
-            logger.log(Level.WARNING, "Could not sendRoomMessage", e);
+            Log.w("react-native-xmpp", "Could not sendRoomMessage" + e.toString());
           }
 
     }
@@ -322,11 +321,11 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             });
 
         } catch (SmackException e) {
-            logger.log(Level.WARNING, "Could not send group message", e);
+            Log.w("react-native-xmpp", "Could not send group message" + e.toString());
             xmppServiceListener.onDisconnect(null);
         } catch (Exception e) {
             e.printStackTrace();
-            logger.log(Level.WARNING, "Could not send group message", e);
+            Log.w("react-native-xmpp", "Could not send group message" + e.toString());
         }
     }
 
@@ -340,7 +339,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             muc.leave();
             muc.removeMessageListener(groupMessageListner);
         } catch (SmackException e) {
-            logger.log(Level.WARNING, "Could not leave chat room", e);
+            Log.w("react-native-xmpp", "Could not leave chat room" + e.toString());
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (XmppStringprepException e) {
@@ -384,7 +383,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
 
 
         } catch (SmackException e) {
-            logger.log(Level.WARNING, "Could not send message", e);
+            Log.w("react-native-xmpp", "Could not send message, calling onDisconnect" + e.toString());
             xmppServiceListener.onDisconnect(null);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -425,7 +424,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
 
 
         } catch (SmackException e) {
-            logger.log(Level.WARNING, "Could not send message", e);
+            Log.w("react-native-xmpp", "XMPP Could not send message calling onDisconnect" + e.toString());
             xmppServiceListener.onDisconnect(null);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -445,7 +444,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             if(connection!=null)
             connection.sendStanza(new Presence(Presence.Type.fromString(type), type, 1, Presence.Mode.available));
         } catch (SmackException.NotConnectedException e) {
-            logger.log(Level.WARNING, "Could not send presence", e);
+            Log.w("react-native-xmpp", "Could not send presence" + e.toString());
         //    xmppServiceListener.onDisconnect(null);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -465,7 +464,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             try {
                 roster.removeEntry(rosterEntry);
             } catch (SmackException.NotLoggedInException | SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
-                logger.log(Level.WARNING, "Could not remove roster entry: " + to);
+                Log.w("react-native-xmpp", "Could not remove roster entry: " + to);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -485,7 +484,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
             try {
                roster.createEntry(JidCreate.entityBareFrom(jabberId),name,null);
             } catch (SmackException.NotLoggedInException | SmackException.NotConnectedException | XMPPException.XMPPErrorException | SmackException.NoResponseException e) {
-                logger.log(Level.WARNING, "Could not remove roster entry: ");
+                Log.w("react-native-xmpp", "Could not remove roster entry: ");
             } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (XmppStringprepException e) {
@@ -527,7 +526,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
 
            // this.xmppServiceListener.onMessageCreated(message);
         } catch (SmackException e) {
-            logger.log(Level.WARNING, "Could not send message", e);
+            Log.w("react-native-xmpp", "Could not send message" + e.toString());
         } catch (InterruptedException e) {
             e.printStackTrace();
         } catch (XmppStringprepException e) {
@@ -552,7 +551,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         try {
             roster.reload();
         } catch (SmackException.NotLoggedInException | SmackException.NotConnectedException e) {
-            logger.log(Level.WARNING, "Could not fetch roster", e);
+            Log.w("react-native-xmpp", "Could not fetch roster" + e.toString());
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -569,7 +568,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         else {
             stateData=name+" stopped typing";
         }
-        Log.e("State",name);
+        Log.e("react-native-xmpp", "State" + name);
     }
 
     @Override
@@ -604,7 +603,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
         try {
             connection.sendStanza(packet);
         } catch (SmackException e) {
-            logger.log(Level.WARNING, "Could not send stanza", e);
+            Log.w("react-native-xmpp", "Could not send stanza" + e.toString());
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -617,13 +616,13 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
 
     @Override
     public void processStanza(Stanza packet) throws SmackException.NotConnectedException {
-        Log.e("Received stanza is", packet.toString());
+        Log.i("react-native-xmpp", "Received stanza is" + packet.toString());
         if (packet instanceof IQ){
             this.xmppServiceListener.onIQ((IQ) packet);
         }else if (packet instanceof Presence){
             this.xmppServiceListener.onPresence((Presence) packet);
         }else{
-            logger.log(Level.WARNING, "Got a Stanza, of unknown subclass", packet.toXML("").toString());
+            Log.w("react-native-xmpp", "Got a Stanza, of unknown subclass" + packet.toXML("").toString());
         }
 
 
@@ -644,7 +643,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
     @Override
     public void processMessage(Chat chat, Message message) {
         this.xmppServiceListener.onMessage(message);
-        // logger.log(Level.INFO, "Received a new message", message.toString());
+        // Log.i("react-native-xmpp", "Received a new message", message.toString());
     }
 
     @Override
@@ -665,7 +664,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
 
     @Override
     public void connectionClosed() {
-        logger.log(Level.INFO, "Connection was closed.");
+        Log.i("react-native-xmpp", "Connection was closed.");
         xmppServiceListener.onDisconnect( null);
        // new ReconnectionTask().execute();
     }
@@ -686,7 +685,7 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
 
 
             } catch (Exception e) {
-                // logger.log(Level.SEVERE, "Could not login for user " + jidParts[0], e);
+                Log.w("react-native-xmpp", "Could not login user on recconect");
                 if (e instanceof SASLErrorException){
                     XmppServiceSmackImpl.this.xmppServiceListener.onLoginError(((SASLErrorException) e).getSASLFailure().toString());
                 }else{
