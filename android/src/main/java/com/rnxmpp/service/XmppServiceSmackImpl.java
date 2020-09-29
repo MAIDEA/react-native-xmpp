@@ -216,23 +216,24 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
 
 
 
-    public void joinRoom(String roomJid, String userNickname,String lastMessage) {
+    public void joinRoom(String roomJid, String userNickname, String lastMessage) {
         try {
             MultiUserChatManager manager = MultiUserChatManager.getInstanceFor(connection);
 
             MultiUserChat muc = manager.getMultiUserChat(JidCreate.entityBareFrom(roomJid));
             DiscussionHistory history = new DiscussionHistory();
-              Calendar c = Calendar.getInstance();
+
             if(lastMessage == null) {
                 history.setMaxStanzas(0);
             } else {
+                Calendar c = Calendar.getInstance();
                 c.setTimeInMillis(Long.parseLong(lastMessage));
                 history.setSince(c.getTime());
             }
 
             if (muc.isJoined()) {
                 Log.i("react-native-xmpp", "XMPP joinRoom - already joined");
-                sendOnlinePresence(muc, roomJid, userNickname, c.getTime());
+                sendOnlinePresence(muc, roomJid, userNickname, lastMessage);
             } else {
                 Log.i("react-native-xmpp", "XMPP joinRoom - joining now");
                 muc.join(Resourcepart.fromOrNull(userNickname), "", history, connection.getReplyTimeout());
@@ -249,12 +250,21 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
     }
 
 
-    private void sendOnlinePresence(MultiUserChat muc,String room,String nickname, Date date){
+    private void sendOnlinePresence(MultiUserChat muc, String room, String nickname, String lastMessage){
         Presence joinPresence = new Presence(Presence.Type.available);
         joinPresence.setTo(room + "/" + nickname);
         MUCInitialPresence mucInitialPresence = new MUCInitialPresence();
         MUCInitialPresence.History history = new MUCInitialPresence.History();
-        history.setSince(date);
+
+
+        if(lastMessage == null) {
+            history.setMaxStanzas(0);
+        } else {
+            Calendar c = Calendar.getInstance();
+            c.setTimeInMillis(Long.parseLong(lastMessage));
+            history.setSince(c.getTime());
+        }
+
         mucInitialPresence.setHistory(history);
         joinPresence.addExtension(mucInitialPresence);
         try {
