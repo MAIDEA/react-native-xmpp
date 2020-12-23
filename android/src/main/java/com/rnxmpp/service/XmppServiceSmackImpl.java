@@ -166,7 +166,8 @@ public class XmppServiceSmackImpl implements XmppService,ChatMessageListener, Ch
                     .setXmppDomain(serName)
                     .setConnectTimeout(20000)
                     .setHostAddress(inetAddress)
-                    .setSecurityMode(SecurityMode.disabled);
+                    .setSecurityMode(SecurityMode.ifpossible); //TODO: self-signed certs will not work, need to fix trustedHosts
+                    //.setSecurityMode(SecurityMode.disabled);
 
   //       if (hostname != null){
   //            confBuilder.setHost(hostname);
