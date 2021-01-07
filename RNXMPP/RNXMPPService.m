@@ -299,28 +299,17 @@ static DDLogLevel ddLogLevel = DDLogLevelInfo;
     }
 
     NSError *error = nil;
-    if (port == 5223) {
-        self.xmppReconnect.usesOldSchoolSecureConnect = YES;
-        if (![xmppStream oldSchoolSecureConnectWithTimeout:30 error:&error])
-        {
-            DDLogError(@"Error connecting: %@", error);
-            if (self.delegate){
-                [self.delegate onLoginError:error];
-            }
+	
+	if (![xmppStream connectWithTimeout:30 error:&error])
+	{
+		DDLogError(@"Error connecting: %@", error);
+		if (self.delegate){
+			[self.delegate onLoginError:error];
+		}
 
-            return NO;
-        }
-    } else {
-        if (![xmppStream connectWithTimeout:30 error:&error])
-        {
-            DDLogError(@"Error connecting: %@", error);
-            if (self.delegate){
-                [self.delegate onLoginError:error];
-            }
-
-            return NO;
-        }
-    }
+		return NO;
+	}
+    
 
     return YES;
 }
